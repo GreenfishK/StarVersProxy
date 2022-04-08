@@ -41,7 +41,8 @@ public class RequestHandler {
                                 baseContentLength = "query=&infer=true&sameAs=true".length();
                                 //TODO: Modify request which is sent to server
                                 String query = mQueryKeyword.group();
-                                String timestampedQuery = QueryHandler.timestampQuery(query);
+                                String decodedStmt = java.net.URLDecoder.decode(query, StandardCharsets.UTF_8.name());
+                                String timestampedQuery = QueryHandler.timestampQuery(decodedStmt);
                                 String encodedQuery = java.net.URLEncoder.encode(timestampedQuery, StandardCharsets.UTF_8.name());
 
                                 String newRequest = mQueryKeyword.replaceFirst(encodedQuery);
@@ -49,11 +50,6 @@ public class RequestHandler {
                                 Matcher m2 = p2.matcher(newRequest);
                                 String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + encodedQuery.length()));
                                 byte[] newRequestBytes = Utils.rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
-
-                                System.out.println("Original request bytes: " + size + "; Modified request bytes: " + Utils.rtrim(newRequestBytes).length);
-                                System.out.println("Original query: " + mQueryKeyword.group() + " ; Timestamped query: " + encodedQuery);
-                                System.out.println("Original request \n" + new String(Utils.rtrim(request), StandardCharsets.UTF_8) + "\n\nNew request \n" + new String(Utils.rtrim(newRequestBytes), StandardCharsets.UTF_8));
-                                System.out.println("\n\n\n\n\n");
 
                                 // read from byte array and write to server
                                 streamToServer.write(newRequestBytes);
@@ -63,19 +59,15 @@ public class RequestHandler {
                                 System.out.println("Modify update");
                                 baseContentLength = "update=&infer=true&sameAs=true".length();
                                 String update = mUpdateKeyword.group();
-                                String timestampedInsert = QueryHandler.timestampInsert(update);
-                                String encodedInsert = java.net.URLEncoder.encode(timestampedInsert, StandardCharsets.UTF_8.name());
+                                String decodedStmt = java.net.URLDecoder.decode(update, StandardCharsets.UTF_8.name());
+                                String timestampedUpdate = QueryHandler.timestampUpdate(decodedStmt);
+                                String encodedInsert = java.net.URLEncoder.encode(timestampedUpdate, StandardCharsets.UTF_8.name());
 
                                 String newRequest = mUpdateKeyword.replaceFirst(encodedInsert);
                                 Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");
                                 Matcher m2 = p2.matcher(newRequest);
                                 String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + encodedInsert.length()));
                                 byte[] newRequestBytes = Utils.rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
-
-                                System.out.println("Original request bytes: " + size + "; Modified request bytes: " + Utils.rtrim(newRequestBytes).length);
-                                System.out.println("Original query: " + mUpdateKeyword.group() + " ; Timestamped query: " + timestampedInsert);
-                                System.out.println("Original request \n" + new String(Utils.rtrim(request), StandardCharsets.UTF_8) + "\n\nNew request \n" + new String(Utils.rtrim(newRequestBytes), StandardCharsets.UTF_8));
-                                System.out.println("\n\n\n\n\n");
 
                                 // read from byte array and write to server
                                 streamToServer.write(newRequestBytes);
@@ -100,8 +92,8 @@ public class RequestHandler {
                 }
             } catch (IOException e) {
                 System.out.println(e.getMessage());
-                System.out.println("Socket closed temporarily. Will reopen with a new client accept.");
-                e.printStackTrace();
+                System.out.println("Socket closed temporarily. Will reopen with a new ping.");
+                //e.printStackTrace();
             }
 
             // the client closed the connection to us, so close our

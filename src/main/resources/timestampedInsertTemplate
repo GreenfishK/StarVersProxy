@@ -1,7 +1,10 @@
 # Context: {0}
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 insert '{'
-    <<<<{1} {2} {3}>> <http://example.com/metadata/versioning#valid_from> ?timestamp>> <http://example.com/metadata/versioning#valid_until> "9999-12-31T00:00:00.000+00:00"^^xsd:dateTime .
+    <<<<?s ?p ?o>> <http://example.com/metadata/versioning#valid_from> ?timestamp>> <http://example.com/metadata/versioning#valid_until> "9999-12-31T00:00:00.000+00:00"^^xsd:dateTime .
 '}' where '{'
+    values (?s ?p ?o) '{'
+        {1}
+    '}'
     BIND(<http://www.w3.org/2001/XMLSchema#dateTime>(NOW()) AS ?timestamp)
 '}'

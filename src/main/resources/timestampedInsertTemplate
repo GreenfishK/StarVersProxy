@@ -7,4 +7,5 @@ insert '{'
         {1}
     '}'
     BIND(<http://www.w3.org/2001/XMLSchema#dateTime>(NOW()) AS ?timestamp)
+    FILTER NOT EXISTS '{'<<<<?s ?p ?o>> <http://example.com/metadata/versioning#valid_from> ?anytimestamp>> <http://example.com/metadata/versioning#valid_until> "9999-12-31T00:00:00.000+00:00"^^xsd:dateTime .'}'
 '}'

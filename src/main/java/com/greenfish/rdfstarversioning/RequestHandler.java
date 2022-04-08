@@ -10,15 +10,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class RequestHandler {
+
     public static void handleClientToServerRequests(Socket client, Socket server) throws IOException {
         final byte[] request = new byte[4096];
         final InputStream streamFromClient = client.getInputStream();
         final OutputStream streamToServer = server.getOutputStream();
-        int baseContentLength = 59;
 
         // a thread to read the client's requests and pass them
         // to the server. A separate thread for asynchronous.
         Thread t = new Thread(() -> {
+            int baseContentLength;
             int size;
             try {
                 while ((size = streamFromClient.read(request)) != -1)
@@ -27,34 +28,68 @@ public class RequestHandler {
                     String requestStr = new String(request, StandardCharsets.UTF_8);
                     Pattern postKeyword = Pattern.compile("\\bPOST\\b");
                     Matcher mPostKeyword = postKeyword.matcher(requestStr);
+
                     Pattern queryKeyword = Pattern.compile("(?<=query=).*(?=&infer)");
                     Matcher mQueryKeyword = queryKeyword.matcher(requestStr);
+                    Pattern updateKeyword = Pattern.compile("(?<=update=).*(?=&infer)");
+                    Matcher mUpdateKeyword = updateKeyword.matcher(requestStr);
                     try {
-                        if (mQueryKeyword.find() && mPostKeyword.find()) {
-                            //TODO: Modify request which is sent to server
-                            String userQuery = mQueryKeyword.group();
-                            String timestampedQuery = QueryHandler.timestampQuery(userQuery);
-                            String encodedQuery = java.net.URLEncoder.encode(timestampedQuery, StandardCharsets.UTF_8.name());
-                            String newRequest = mQueryKeyword.replaceFirst(encodedQuery);
-                            Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");
-                            Matcher m2 = p2.matcher(newRequest);
-                            String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + timestampedQuery.length()));
-                            byte[] newRequestBytes = rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
+                        if(mPostKeyword.find())
+                        {
+                            if (mQueryKeyword.find() ) {
+                                System.out.println("Modify query");
+                                baseContentLength = "query=&infer=true&sameAs=true".length();
+                                //TODO: Modify request which is sent to server
+                                String query = mQueryKeyword.group();
+                                String timestampedQuery = QueryHandler.timestampQuery(query);
+                                String encodedQuery = java.net.URLEncoder.encode(timestampedQuery, StandardCharsets.UTF_8.name());
 
+                                String newRequest = mQueryKeyword.replaceFirst(encodedQuery);
+                                Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");
+                                Matcher m2 = p2.matcher(newRequest);
+                                String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + encodedQuery.length()));
+                                byte[] newRequestBytes = Utils.rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
 
-                            System.out.println("Original request bytes: " + size + "; Modified request bytes: " + rtrim(newRequestBytes).length);
-                            System.out.println("Original query: " + mQueryKeyword.group() + " ; Timestamped query: " + encodedQuery);
-                            System.out.println("Original request \n" + new String(rtrim(request), StandardCharsets.UTF_8) + "\n\nNew request \n" + new String(rtrim(newRequestBytes), StandardCharsets.UTF_8));
-                            System.out.println("\n\n\n\n\n");
+                                System.out.println("Original request bytes: " + size + "; Modified request bytes: " + Utils.rtrim(newRequestBytes).length);
+                                System.out.println("Original query: " + mQueryKeyword.group() + " ; Timestamped query: " + encodedQuery);
+                                System.out.println("Original request \n" + new String(Utils.rtrim(request), StandardCharsets.UTF_8) + "\n\nNew request \n" + new String(Utils.rtrim(newRequestBytes), StandardCharsets.UTF_8));
+                                System.out.println("\n\n\n\n\n");
 
-                            // read from byte array and write to server
-                            streamToServer.write(newRequestBytes);
-                            //streamToServer.write(request, 0, size);
+                                // read from byte array and write to server
+                                streamToServer.write(newRequestBytes);
+                                //streamToServer.write(request, 0, size);
+
+                            } else if (mUpdateKeyword.find()) {
+                                System.out.println("Modify update");
+                                baseContentLength = "update=&infer=true&sameAs=true".length();
+                                String update = mUpdateKeyword.group();
+                                String timestampedInsert = QueryHandler.timestampInsert(update);
+                                String encodedInsert = java.net.URLEncoder.encode(timestampedInsert, StandardCharsets.UTF_8.name());
+
+                                String newRequest = mUpdateKeyword.replaceFirst(encodedInsert);
+                                Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");
+                                Matcher m2 = p2.matcher(newRequest);
+                                String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + encodedInsert.length()));
+                                byte[] newRequestBytes = Utils.rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
+
+                                System.out.println("Original request bytes: " + size + "; Modified request bytes: " + Utils.rtrim(newRequestBytes).length);
+                                System.out.println("Original query: " + mUpdateKeyword.group() + " ; Timestamped query: " + timestampedInsert);
+                                System.out.println("Original request \n" + new String(Utils.rtrim(request), StandardCharsets.UTF_8) + "\n\nNew request \n" + new String(Utils.rtrim(newRequestBytes), StandardCharsets.UTF_8));
+                                System.out.println("\n\n\n\n\n");
+
+                                // read from byte array and write to server
+                                streamToServer.write(newRequestBytes);
+                                //streamToServer.write(request, 0, size);
+                            } else {
+                                streamToServer.write(request, 0, size);
+                                System.out.println("No query or update sent. Request was passed through unmodified.");
+                            }
 
                         } else {
                             streamToServer.write(request, 0, size);
-                            System.out.println("No query sent. Request was passed through unmodified.");
+                            System.out.println("No query or update sent. Request was passed through unmodified.");
                         }
+
                     } catch (Exception e) {
                         System.out.println(e.getMessage());
                         e.printStackTrace();
@@ -111,41 +146,6 @@ public class RequestHandler {
         streamToClient.close();
 
     }
-
-    /*//from w w w. ja v a  2 s .  co m
-     * Copyright 1999-2101 Alibaba Group Holding Ltd.
-     *
-     * Licensed under the Apache License, Version 2.0 (the "License");
-     * you may not use this file except in compliance with the License.
-     * You may obtain a copy of the License at
-     *
-     *      http://www.apache.org/licenses/LICENSE-2.0
-     *
-     * Unless required by applicable law or agreed to in writing, software
-     * distributed under the License is distributed on an "AS IS" BASIS,
-     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     * See the License for the specific language governing permissions and
-     * limitations under the License.
-     */
-
-
-    private static byte[] rtrim(byte[] array) {
-        int notZeroLen = array.length;
-        for (int i = array.length - 1; i >= 0; --i, notZeroLen--) {
-            if (array[i] != 0) {
-                break;
-            }
-        }
-
-        if (notZeroLen != array.length) {
-            array = Arrays.copyOf(array, notZeroLen);
-        }
-
-        return array;
-    }
-
-
-
 
 
 }

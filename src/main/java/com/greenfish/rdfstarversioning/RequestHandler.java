@@ -124,6 +124,8 @@ public class RequestHandler {
         try {
             while ((bytesRead = streamFromServer.read(reply)) != -1) {
                 streamToClient.write(reply, 0, bytesRead);
+                String replyStr = new String(reply, StandardCharsets.UTF_8);
+                System.out.println(replyStr);
                 streamToClient.flush();
 
                 //String str = new String(request, StandardCharsets.UTF_8);

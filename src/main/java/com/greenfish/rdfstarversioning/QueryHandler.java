@@ -1,9 +1,12 @@
 package com.greenfish.rdfstarversioning;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.query.algebra.*;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.ParsedUpdate;
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
+import org.eclipse.rdf4j.queryrender.sparql.experimental.SparqlQueryRenderer;
 import org.eclipse.rdf4j.repository.sail.SailTupleQuery;
 import java.text.MessageFormat;
 import java.util.*;
@@ -19,11 +22,10 @@ public class QueryHandler {
             TupleExpr queryTree = originalQuery.getTupleExpr();
             queryTree.visit(getTimestampingModel());
             originalQuery.setTupleExpr(queryTree);
-            ParsedTupleQuery tsQuery = new ParsedTupleQuery(queryTree);
-            SailTupleQuery sailTupleQuery = new SailTupleQuery(tsQuery, null);
+            String transformedQuery = new SparqlQueryRenderer().render(originalQuery);
 
             System.out.println(queryTree);
-            System.out.println(tsQuery.getSourceString());
+            System.out.println(transformedQuery);
 
         } else {
             System.out.println("There is no solution yet for timestamping queries other than tuple queries.");
@@ -376,7 +378,7 @@ public class QueryHandler {
 
             @Override
             public void meet(Slice slice) throws Exception {
-
+                slice.visitChildren(this);
             }
 
             @Override
@@ -429,6 +431,7 @@ public class QueryHandler {
                                FunctionCall (NOW)
                 */
                 System.out.println("meet statementPattern");
+                ValueFactory valueFactory = SimpleValueFactory.getInstance();
                 final Var anonymous1 = new Var("_anon_" + UUID.randomUUID().toString().replaceAll("-",
                         "_"));
                 anonymous1.setAnonymous(true);
@@ -446,7 +449,7 @@ public class QueryHandler {
                 ref2.setSubjectVar(anonymous1);
                 Var predicateVar2 = new Var();
                 predicateVar2.setName("_const_55df1a2a_uri");
-                predicateVar2.setValue(() ->  "http://example.com/metadata/versioning#valid_from");
+                predicateVar2.setValue(valueFactory.createIRI("http://example.com/metadata/versioning#valid_from"));
                 predicateVar2.setConstant(true);
                 predicateVar2.setAnonymous(true);
                 ref2.setPredicateVar(predicateVar2);
@@ -455,7 +458,7 @@ public class QueryHandler {
 
                 Var predicateVar3 = new Var();
                 predicateVar3.setName("_const_66d5ccde_uri");
-                predicateVar3.setValue(() ->  "http://example.com/metadata/versioning#valid_until");
+                predicateVar3.setValue(valueFactory.createIRI("http://example.com/metadata/versioning#valid_until"));
                 predicateVar3.setConstant(true);
                 predicateVar3.setAnonymous(true);
                 StatementPattern stmt1 = new StatementPattern(anonymous2, predicateVar3, new Var("valid_until"));
@@ -466,7 +469,7 @@ public class QueryHandler {
                         new Compare( new Var("tsBGP"), new Var("valid_until"), Compare.CompareOp.LT)));
                 ExtensionElem extElem = new ExtensionElem();
                 extElem.setName("tsBGP");
-                extElem.setExpr(new FunctionCall("NOW()"));
+                extElem.setExpr(new FunctionCall("NOW"));
                 timestampFilter.setArg(new Extension(new Join(new Join(ref1, ref2), stmt1),extElem));
 
                 //StatementPattern test = new StatementPattern(new Var("s"), new Var("p"), new Var("o"));

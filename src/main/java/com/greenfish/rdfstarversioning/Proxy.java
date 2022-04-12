@@ -2,6 +2,7 @@ package com.greenfish.rdfstarversioning;
 
 import java.io.*;
 import java.net.*;
+import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.regex.Matcher;
@@ -30,6 +31,10 @@ public class Proxy {
     public static void runServer(String host, int remoteport, int localport) throws IOException {
         // Creating a ServerSocket to listen for connections with
         ServerSocket s = new ServerSocket(localport);
+        HttpClient httpClient = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL) // Always redirect, except from HTTPS URLs to HTTP URLs.
+                .proxy(ProxySelector.of(new InetSocketAddress("localhost", 7480)))
+                .build();
         while (true) {
             Socket client = null, server = null;
             try {

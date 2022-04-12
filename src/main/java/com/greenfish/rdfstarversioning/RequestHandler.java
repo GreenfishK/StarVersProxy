@@ -117,26 +117,17 @@ public class RequestHandler {
 
         byte[] reply = new byte[4096];
 
-
-        // Read the server's responses
-        // and pass them back to the client.
+        // Read the server's responses and pass them back to the client.
         int bytesRead;
         try {
             while ((bytesRead = streamFromServer.read(reply)) != -1) {
                 streamToClient.write(reply, 0, bytesRead);
-                String replyStr = new String(reply, StandardCharsets.UTF_8);
-                System.out.println(replyStr);
                 streamToClient.flush();
-
-                //String str = new String(request, StandardCharsets.UTF_8);
-                //System.out.println(str);
             }
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
-
-        // The server closed its connection to us, so we close our
-        // connection to our client.
+        // The server closed its connection to us, so we close our connection to our client.
         streamToClient.close();
 
     }

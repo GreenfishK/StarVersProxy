@@ -383,85 +383,23 @@ public class QueryHandler {
 
             @Override
             public void meet(StatementPattern statementPattern) throws Exception {
-                /*
-                   Projection
-                      ProjectionElemList
-                         ProjectionElem "s"
-                         ProjectionElem "o"
-                      StatementPattern
-                         Var (name=s)
-                         Var (name=_const_48d4a287_uri, value=http://example.com/queries/predicate1, anonymous)
-                         Var (name=o)
-
-                 -->
-
-                   Projection
-                      ProjectionElemList
-                         ProjectionElem "s"
-                         ProjectionElem "o"
-                         ProjectionElem "valid_from"
-                         ProjectionElem "valid_until"
-                         ProjectionElem "tsBGP"
-                      Filter (new scope)
-                         And
-                            Compare (<=)
-                               Var (name=valid_from)
-                               Var (name=tsBGP)
-                            Compare (<)
-                               Var (name=tsBGP)
-                               Var (name=valid_until)
-                         Extension
-                            Join
-                               Join
-                                  TripleRef
-                                     Var (name=s)
-                                     Var (name=_const_48d4a287_uri, value=http://example.com/queries/predicate1, anonymous)
-                                     Var (name=o)
-                                     Var (name=_anon_c0b09526_077d_4115_ad32_560302225777, anonymous)
-                                  TripleRef
-                                     Var (name=_anon_c0b09526_077d_4115_ad32_560302225777, anonymous)
-                                     Var (name=_const_55df1a2a_uri, value=http://example.com/metadata/versioning#valid_from, anonymous)
-                                     Var (name=valid_from)
-                                     Var (name=_anon_f3c9edb8_91a2_48e0_90f4_f3200a72ea62, anonymous)
-                               StatementPattern
-                                  Var (name=_anon_f3c9edb8_91a2_48e0_90f4_f3200a72ea62, anonymous)
-                                  Var (name=_const_66d5ccde_uri, value=http://example.com/metadata/versioning#valid_until, anonymous)
-                                  Var (name=valid_until)
-                            ExtensionElem (tsBGP)
-                               FunctionCall (NOW)
-                */
                 System.out.println("meet statementPattern");
                 ValueFactory valueFactory = SimpleValueFactory.getInstance();
-                final Var anonymous1 = new Var("_anon_" + UUID.randomUUID().toString().replaceAll("-",
-                        "_"));
-                anonymous1.setAnonymous(true);
-                final Var anonymous2 = new Var("_anon_" + UUID.randomUUID().toString().replaceAll("-",
-                        "_"));
-                anonymous1.setAnonymous(true);
 
-                TripleRef ref1 = new TripleRef();
-                ref1.setSubjectVar(new Var(statementPattern.getSubjectVar().getName()));
-                ref1.setPredicateVar(new Var(statementPattern.getPredicateVar().getName()));
-                ref1.setObjectVar(new Var(statementPattern.getObjectVar().getName()));
-                ref1.setExprVar(anonymous1);
+                Var nested = new Var();
+                nested.setName("_const1_");
+                nested.setValue(valueFactory.createIRI("<<<?s ?p ?o>> <http://example.com/metadata/versioning#valid_from> ?valid_from>"));
 
-                TripleRef ref2 = new TripleRef();
-                ref2.setSubjectVar(anonymous1);
-                Var predicateVar2 = new Var();
-                predicateVar2.setName("_const_55df1a2a_uri");
-                predicateVar2.setValue(valueFactory.createIRI("http://example.com/metadata/versioning#valid_from"));
-                predicateVar2.setConstant(true);
-                predicateVar2.setAnonymous(true);
-                ref2.setPredicateVar(predicateVar2);
-                ref2.setObjectVar(new Var("valid_from"));
-                ref2.setExprVar(anonymous2);
+                Var valid_until_iri = new Var();
+                valid_until_iri.setName("_const_66d5ccde_uri");
+                valid_until_iri.setValue(valueFactory.createIRI("http://example.com/metadata/versioning#valid_until"));
+                valid_until_iri.setConstant(true);
+                valid_until_iri.setAnonymous(true);
 
-                Var predicateVar3 = new Var();
-                predicateVar3.setName("_const_66d5ccde_uri");
-                predicateVar3.setValue(valueFactory.createIRI("http://example.com/metadata/versioning#valid_until"));
-                predicateVar3.setConstant(true);
-                predicateVar3.setAnonymous(true);
-                StatementPattern stmt1 = new StatementPattern(anonymous2, predicateVar3, new Var("valid_until"));
+                StatementPattern stmt1 = new StatementPattern(
+                        nested,
+                        valid_until_iri,
+                        new Var("valid_until"));
 
                 Filter timestampFilter = new Filter();
                 timestampFilter.setCondition(new And(
@@ -470,9 +408,8 @@ public class QueryHandler {
                 ExtensionElem extElem = new ExtensionElem();
                 extElem.setName("tsBGP");
                 extElem.setExpr(new FunctionCall("NOW"));
-                timestampFilter.setArg(new Extension(new Join(new Join(ref1, ref2), stmt1),extElem));
+                timestampFilter.setArg(new Extension(stmt1, extElem));
 
-                //StatementPattern test = new StatementPattern(new Var("s"), new Var("p"), new Var("o"));
                 statementPattern.replaceWith(timestampFilter);
             }
 

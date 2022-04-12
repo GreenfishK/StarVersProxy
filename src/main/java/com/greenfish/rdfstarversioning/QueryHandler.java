@@ -26,13 +26,12 @@ public class QueryHandler {
 
             System.out.println(queryTree);
             System.out.println(transformedQuery);
+            return transformedQuery;
 
         } else {
             System.out.println("There is no solution yet for timestamping queries other than tuple queries.");
             return query;
         }
-
-        return "Select * where {?s ?p ?o. } limit 10";
     }
 
 

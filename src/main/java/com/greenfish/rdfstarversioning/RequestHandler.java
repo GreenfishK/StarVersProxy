@@ -61,6 +61,7 @@ public class RequestHandler {
                                 String update = mUpdateKeyword.group();
                                 String decodedStmt = java.net.URLDecoder.decode(update, StandardCharsets.UTF_8.name());
                                 String timestampedUpdate = QueryHandler.timestampUpdate(decodedStmt);
+                                System.out.println(timestampedUpdate);
                                 String encodedInsert = java.net.URLEncoder.encode(timestampedUpdate, StandardCharsets.UTF_8.name());
 
                                 String newRequest = mUpdateKeyword.replaceFirst(encodedInsert);

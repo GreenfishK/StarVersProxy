@@ -37,7 +37,10 @@ public class QueryHandler {
 
 
     private static QueryModelVisitor<Exception> getTimestampingModel() {
+
         return new QueryModelVisitor<Exception>() {
+            int stmtCnt = 0;
+
             @Override
             public void meet(QueryRoot queryRoot) throws Exception {
             }
@@ -238,6 +241,7 @@ public class QueryHandler {
 
             @Override
             public void meet(Join join) throws Exception {
+                join.visitChildren(this);
 
             }
 
@@ -383,12 +387,13 @@ public class QueryHandler {
 
             @Override
             public void meet(StatementPattern statementPattern) throws Exception {
+                stmtCnt++;
                 System.out.println("meet statementPattern");
                 ValueFactory valueFactory = SimpleValueFactory.getInstance();
 
                 Var nested = new Var();
                 nested.setName("_const1_");
-                nested.setValue(valueFactory.createIRI("<<<?s ?p ?o>> <http://example.com/metadata/versioning#valid_from> ?valid_from>"));
+                nested.setValue(valueFactory.createIRI("<<<?s ?p ?o>> <http://example.com/metadata/versioning#valid_from> ?valid_from" + stmtCnt + ">"));
 
                 Var valid_until_iri = new Var();
                 valid_until_iri.setName("_const_66d5ccde_uri");
@@ -399,12 +404,12 @@ public class QueryHandler {
                 StatementPattern stmt1 = new StatementPattern(
                         nested,
                         valid_until_iri,
-                        new Var("valid_until"));
+                        new Var("valid_until" + stmtCnt));
 
                 Filter timestampFilter = new Filter();
                 timestampFilter.setCondition(new And(
-                        new Compare( new Var("valid_from"), new Var("tsBGP"), Compare.CompareOp.LE),
-                        new Compare( new Var("tsBGP"), new Var("valid_until"), Compare.CompareOp.LT)));
+                        new Compare( new Var("valid_from" + stmtCnt), new Var("tsBGP"), Compare.CompareOp.LE),
+                        new Compare( new Var("tsBGP"), new Var("valid_until" + stmtCnt), Compare.CompareOp.LT)));
                 ExtensionElem extElem = new ExtensionElem();
                 extElem.setName("tsBGP");
                 extElem.setExpr(new FunctionCall("NOW"));

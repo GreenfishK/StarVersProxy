@@ -89,7 +89,7 @@ public class RequestHandler {
 
                             } else {
                                 streamToServer.write(request, 0, size);
-                                System.out.println("A request with parameters other than query= or update= was sent." +
+                                System.out.println("Parameters query= or update= were not found in the http request." +
                                         " Request was passed through unmodified.");
                                 System.out.println("Request string: \n " + requestStr);
                             }

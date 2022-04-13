@@ -23,5 +23,3 @@ ENV PATH=${GRAPHDB_INSTALL_DIR}/bin:$PATH
 CMD ["-Dgraphdb.home=/opt/graphdb/home"]
 
 ENTRYPOINT ["/opt/graphdb/dist/bin/graphdb"]
-
-# EXPOSE 7400

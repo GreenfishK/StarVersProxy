@@ -40,8 +40,8 @@ services:
     ports:
       - "7480:7480"
     volumes:
-      - ../../../../target/StarVersProxy-1.0-SNAPSHOT.jar:/opt/proxy/StarVersProxy-1.0-SNAPSHOT.jar
-    entrypoint: ['java', '-jar', '/opt/proxy/StarVersProxy-1.0-SNAPSHOT.jar']
+      - ../../../../target/StarVersProxy-1.0-SNAPSHOT-jar-with-dependencies.jar:/opt/proxy/StarVersProxy-1.0-SNAPSHOT-jar-with-dependencies.jar
+    entrypoint: ['java', '-jar', '/opt/proxy/StarVersProxy-1.0-SNAPSHOT-jar-with-dependencies.jar']
 
 
 

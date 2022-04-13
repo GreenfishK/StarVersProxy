@@ -7,7 +7,6 @@ import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.ParsedUpdate;
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
 import org.eclipse.rdf4j.queryrender.sparql.experimental.SparqlQueryRenderer;
-import org.eclipse.rdf4j.repository.sail.SailTupleQuery;
 import java.text.MessageFormat;
 import java.util.*;
 

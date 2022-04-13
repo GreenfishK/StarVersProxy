@@ -27,7 +27,9 @@ import static org.junit.Assert.*;
  */
 public class StarVersProxyTest {
     private static SPARQLRepository repo;
+    private static SPARQLRepository proxy;
     private static RepositoryConnection sparqlRepoConnection;
+    private static RepositoryConnection sparqlProxyConnection;
     private static String repoId;
 
     private static String logFilePath;
@@ -41,10 +43,14 @@ public class StarVersProxyTest {
         logFilePath = String.format("target/graphdb-data/logs/main-%s.log", dtf.format(LocalDateTime.now()));
         lastLineNumber = getLastLineNumber(logFilePath);
 
-        String queryEndpoint = String.format("http://localhost:7480/repositories/%s", repoId);
-        String updateEndpoint = String.format("http://localhost:7480/repositories/%s/statements", repoId);
+        String queryEndpoint = String.format("http://localhost:7400/repositories/%s", repoId);
+        String updateEndpoint = String.format("http://localhost:7400/repositories/%s/statements", repoId);
+        String queryEndpointProxy = String.format("http://localhost:7480/repositories/%s", repoId);
+        String updateEndpointProxy = String.format("http://localhost:7480/repositories/%s/statements", repoId);
+
         try {
             //Start GraphDB server and create or re-create testTimestamping repository with docker-compose.
+            //Start the proxy server
             runDocker(startContainer());
             System.out.println("\nPort not available yet available...");
             Thread.sleep(20000);
@@ -53,19 +59,35 @@ public class StarVersProxyTest {
             repo = new SPARQLRepository(queryEndpoint, updateEndpoint);
             sparqlRepoConnection = repo.getConnection();
 
+            proxy = new SPARQLRepository(queryEndpointProxy, updateEndpointProxy);
+            sparqlProxyConnection = proxy.getConnection();
+
             //Test queries against SPARQL endpoint
             try {
                 TupleQuery query = sparqlRepoConnection.prepareTupleQuery("select * { ?s ?p ?o }");
                 try (TupleQueryResult result = query.evaluate()) {
                     assertTrue("Triples must be preloaded from the /import directory.", result.hasNext());
                     long cntTriples = result.stream().count();
-                    System.out.println(cntTriples);
                     assertTrue("Number of triples must be over 70 (there are always 70 inferred triples)",
                             cntTriples > 70);
                 }
             } catch (QueryEvaluationException e) {
                 System.err.println(e.getClass() + ":" + e.getMessage());
                 throw new ServerErrorException("Your GraphDB server might not be running.");
+            }
+
+            //Test queries against SPARQL endpoint
+            try {
+                TupleQuery query = sparqlProxyConnection.prepareTupleQuery("select * { ?s ?p ?o }");
+                try (TupleQueryResult result = query.evaluate()) {
+                    assertTrue("Triples must be preloaded from the /import directory.", result.hasNext());
+                    long cntTriples = result.stream().count();
+                    assertTrue("Number of triples must be over 10. Initially, 10 triples were in the test.trigs file",
+                            cntTriples >= 10);
+                }
+            } catch (QueryEvaluationException e) {
+                System.err.println(e.getClass() + ":" + e.getMessage());
+                throw new ServerErrorException("Your Proxy server might not be running.");
             }
 
             // Test update statements against SPARQL endpoint
@@ -76,6 +98,19 @@ public class StarVersProxyTest {
                 connection.prepareUpdate(updateString).execute();
                 connection.commit();
                 System.out.println("Write statements are executable against the embedded repository");
+            } catch (UpdateExecutionException e) {
+                System.err.println(e.getClass() + ":" + e.getMessage());
+                throw new RepositoryException(e.getMessage());
+            }
+
+            // Test update statements against SPARQL endpoint
+            try (RepositoryConnection connection = sparqlProxyConnection) {
+                connection.begin();
+                String updateString = "delete data {graph <http://example.com/testGraph> " +
+                        "{<http://example.com/s/testConnection> <http://example.com/p/testConnection> <http://example.com/o/testConnection>}}";
+                connection.prepareUpdate(updateString).execute();
+                connection.commit();
+                System.out.println("Write statements are executable against the sparql proxy server");
             } catch (UpdateExecutionException e) {
                 System.err.println(e.getClass() + ":" + e.getMessage());
                 throw new RepositoryException(e.getMessage());
@@ -96,9 +131,9 @@ public class StarVersProxyTest {
         defaultGraph = false;
         String triple = "<http://example.com/testGraph/s/insertThis1> <http://example.com/testGraph/p/insertThis1> <http://example.com/testGraph/o/insertThis1>";
         String updateString = String.format("insert data { graph <http://example.com/testGraph> {%s}}", triple);
-        sparqlRepoConnection.begin();
-        sparqlRepoConnection.prepareUpdate(updateString).execute();
-        sparqlRepoConnection.commit();
+        sparqlProxyConnection.begin();
+        sparqlProxyConnection.prepareUpdate(updateString).execute();
+        sparqlProxyConnection.commit();
 
         //Wait for plugin to insert triples. This is managed by the server.
         Thread.sleep(5000);
@@ -424,34 +459,6 @@ public class StarVersProxyTest {
         }
 
 
-    }
-
-    @After
-    public void clearTestGraph() {
-        /*
-        String updateString;
-        String graph = "";
-        if (defaultGraph) {
-            updateString = "clear default";
-            graph = "<http://example.com/testGraph>";
-        } else {
-            updateString = "clear graph <http://example.com/testGraph>";
-            graph = "default";
-        }
-
-        sparqlRepoConnection.begin();
-        sparqlRepoConnection.prepareUpdate(updateString).execute();
-        sparqlRepoConnection.commit();
-        System.out.printf("%s has been cleared.", graph);
-
-        BooleanQuery query;
-        if (defaultGraph)
-            query = sparqlRepoConnection.prepareBooleanQuery("ask { ?s ?p ?o }");
-        else
-            query = sparqlRepoConnection.prepareBooleanQuery("ask from <http://example.com/testGraph> { ?s ?p ?o }");
-        boolean hasResults = query.evaluate();
-        assertFalse("No triples should be in the graph anymore", hasResults);
-        */
     }
 
     @AfterClass

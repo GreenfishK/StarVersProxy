@@ -1,12 +1,23 @@
 package com.greenfish.rdfstarversioning;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.GraphQueryResult;
+import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.algebra.*;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.ParsedUpdate;
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
 import org.eclipse.rdf4j.queryrender.sparql.experimental.SparqlQueryRenderer;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.helpers.StatementCollector;
+import org.eclipse.rdf4j.rio.ntriples.NTriplesParser;
+import org.eclipse.rdf4j.rio.turtle.TurtleParser;
+
+import java.io.StringReader;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -463,17 +474,38 @@ public class QueryHandler {
         String context = "default graph";
         List<UpdateExpr> updateExprs = update.getUpdateExprs();
         UpdateExpr expr = updateExprs.get(0);
+
         if (expr instanceof InsertData) {
             InsertData insertdata = ((InsertData) expr);
             String dataBlock = insertdata.getDataBlock();
+
+            //Get rid of first few lines with prefixes
             Scanner scanner = new Scanner(dataBlock);
             for (int i = 0; i < insertdata.getLineNumberOffset(); i++)
                 scanner.nextLine();
-            StringBuilder timestampedInsertBlock = new StringBuilder();
-            while (scanner.hasNext()) {
-                timestampedInsertBlock.append("(").append(scanner.nextLine()).append(")\n");
+
+            //Get triple statements
+            StringBuilder insertBlock = new StringBuilder();
+            while (scanner.hasNext())
+                insertBlock.append(scanner.nextLine());
+            TurtleParser triplesParser = new TurtleParser();
+            Model model = new LinkedHashModel();
+            triplesParser.setRDFHandler(new StatementCollector(model));
+            triplesParser.parse(new StringReader(insertBlock.toString()));
+
+            //Bring triple statements into the format suitable for the VALUES block
+            StringBuilder valuesInsertBlock = new StringBuilder();
+            for (Statement stmt : model) {
+                valuesInsertBlock
+                        .append('(')
+                        .append(Utils.entityToString(stmt.getSubject()))
+                        .append(Utils.entityToString(stmt.getPredicate()))
+                        .append(Utils.entityToString(stmt.getObject()))
+                        .append(')').append('\n');
             }
-            return  MessageFormat.format(Utils.readAllBytes("timestampedInsertTemplate"), context, timestampedInsertBlock);
+            System.out.println(MessageFormat.format(Utils.readAllBytes("timestampedInsertTemplate"), context, valuesInsertBlock));
+            return  MessageFormat.format(Utils.readAllBytes("timestampedInsertTemplate"), context, valuesInsertBlock);
+
 
         } else if (expr instanceof DeleteData) {
             DeleteData deleteData = ((DeleteData) expr);

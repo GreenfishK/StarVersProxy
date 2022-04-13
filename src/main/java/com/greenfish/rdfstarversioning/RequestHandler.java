@@ -1,5 +1,7 @@
 package com.greenfish.rdfstarversioning;
 
+import org.eclipse.rdf4j.query.MalformedQueryException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -42,40 +44,54 @@ public class RequestHandler {
                                 //TODO: Modify request which is sent to server
                                 String query = mQueryKeyword.group();
                                 String decodedStmt = java.net.URLDecoder.decode(query, StandardCharsets.UTF_8.name());
-                                String timestampedQuery = QueryHandler.timestampQuery(decodedStmt);
-                                String encodedQuery = java.net.URLEncoder.encode(timestampedQuery, StandardCharsets.UTF_8.name());
+                                String timestampedQuery ="";
+                                try {
+                                    timestampedQuery = QueryHandler.timestampQuery(decodedStmt);
+                                    String encodedQuery = java.net.URLEncoder.encode(timestampedQuery, StandardCharsets.UTF_8.name());
 
-                                String newRequest = mQueryKeyword.replaceFirst(encodedQuery);
-                                Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");
-                                Matcher m2 = p2.matcher(newRequest);
-                                String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + encodedQuery.length()));
-                                byte[] newRequestBytes = Utils.rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
+                                    String newRequest = mQueryKeyword.replaceFirst(encodedQuery);
+                                    Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");
+                                    Matcher m2 = p2.matcher(newRequest);
+                                    String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + encodedQuery.length()));
+                                    byte[] newRequestBytes = Utils.rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
 
-                                // read from byte array and write to server
-                                streamToServer.write(newRequestBytes);
-                                //streamToServer.write(request, 0, size);
+                                    // read from byte array and write to server
+                                    streamToServer.write(newRequestBytes);
+                                } catch (MalformedQueryException e) {
+                                    System.out.println(e.getMessage());
+                                    e.printStackTrace();
+                                    streamToServer.write(request, 0, size);
+                                }
 
                             } else if (mUpdateKeyword.find()) {
                                 System.out.println("Modify update");
                                 baseContentLength = "update=&infer=true&sameAs=true".length();
                                 String update = mUpdateKeyword.group();
                                 String decodedStmt = java.net.URLDecoder.decode(update, StandardCharsets.UTF_8.name());
-                                String timestampedUpdate = QueryHandler.timestampUpdate(decodedStmt);
-                                System.out.println(timestampedUpdate);
-                                String encodedInsert = java.net.URLEncoder.encode(timestampedUpdate, StandardCharsets.UTF_8.name());
+                                String timestampedUpdate = "";
+                                try {
+                                    timestampedUpdate = QueryHandler.timestampUpdate(decodedStmt);
+                                    String encodedInsert = java.net.URLEncoder.encode(timestampedUpdate, StandardCharsets.UTF_8.name());
 
-                                String newRequest = mUpdateKeyword.replaceFirst(encodedInsert);
-                                Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");
-                                Matcher m2 = p2.matcher(newRequest);
-                                String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + encodedInsert.length()));
-                                byte[] newRequestBytes = Utils.rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
+                                    String newRequest = mUpdateKeyword.replaceFirst(encodedInsert);
+                                    Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");
+                                    Matcher m2 = p2.matcher(newRequest);
+                                    String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + encodedInsert.length()));
+                                    byte[] newRequestBytes = Utils.rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
 
-                                // read from byte array and write to server
-                                streamToServer.write(newRequestBytes);
-                                //streamToServer.write(request, 0, size);
+                                    // read from byte array and write to server
+                                    streamToServer.write(newRequestBytes);
+                                } catch (MalformedQueryException e) {
+                                    System.out.println(e.getMessage());
+                                    e.printStackTrace();
+                                    streamToServer.write(request, 0, size);
+                                }
+
                             } else {
                                 streamToServer.write(request, 0, size);
-                                System.out.println("No query or update sent. Request was passed through unmodified.");
+                                System.out.println("A request with parameters other than query= or update= was sent." +
+                                        " Request was passed through unmodified.");
+                                System.out.println("Request string: \n " + requestStr);
                             }
 
                         } else {

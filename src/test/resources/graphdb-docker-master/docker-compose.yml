@@ -1,0 +1,48 @@
+version: "3"
+
+services:
+  database:
+    container_name: graphdb
+    # image: ontotext/graphdb:9.3.0-ee
+    build:
+      context: ./free-edition
+      dockerfile: Dockerfile
+      args:
+        version: 9.10.3
+    restart: unless-stopped
+    environment: 
+      GDB_JAVA_OPTS: >-
+        -Xmx2g -Xms2g
+        -Dgraphdb.home=/opt/graphdb/home
+        -Dgraphdb.workbench.importDirectory=/opt/graphdb/home/graphdb-import
+        -Dgraphdb.workbench.cors.enable=true
+        -Dgraphdb.connector.port=7400
+        -Dhttp.proxyHost=localhost|127.*|[::1]
+        -Dhttp.proxyPort=7480
+        -Denable-context-index=true
+        -Dentity-pool-implementation=transactional
+        -Dhealth.max.query.time.seconds=60
+        -Dgraphdb.append.request.id.headers=true
+        -Dreuse.vars.in.subselects=true
+    ports:
+      - "7400:7400"
+    volumes:
+      - ../../../../target/graphdb-data:/opt/graphdb/home
+      - ./free-edition/LICENSE.txt:/opt/graphdb/dist/LICENSE.txt
+  proxy:
+    container_name: graphdbproxy
+    # image:
+    build:
+      context: ../../../../
+      dockerfile: Dockerfile
+    network_mode: host
+    restart: unless-stopped
+    ports:
+      - "7480:7480"
+    volumes:
+      - ../../../../target/StarVersProxy-1.0-SNAPSHOT.jar:/opt/proxy/StarVersProxy-1.0-SNAPSHOT.jar
+    entrypoint: ['java', '-jar', '/opt/proxy/StarVersProxy-1.0-SNAPSHOT.jar']
+
+
+
+

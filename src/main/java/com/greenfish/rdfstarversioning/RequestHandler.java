@@ -49,18 +49,20 @@ public class RequestHandler {
                         {
                             if (mQueryKeyword.find() ) {
                                 System.out.println("Modify query");
-                                baseContentLength = "query=&infer=true&sameAs=true".length();
+                                baseContentLength = ("query=" + mQueryKeyword.group(2)).length();
                                 //TODO: Modify request which is sent to server
-                                String query = mQueryKeyword.group();
+                                String query = mQueryKeyword.group(1);
                                 String decodedStmt = java.net.URLDecoder.decode(query, StandardCharsets.UTF_8.name());
                                 String timestampedQuery ="";
                                 try {
                                     timestampedQuery = QueryHandler.timestampQuery(decodedStmt);
                                     String encodedQuery = java.net.URLEncoder.encode(timestampedQuery, StandardCharsets.UTF_8.name());
-                                    String newRequest = mQueryKeyword.replaceFirst(encodedQuery);
+                                    String newRequest = mQueryKeyword.replaceFirst(encodedQuery + "$2");
                                     Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");
                                     Matcher m2 = p2.matcher(newRequest);
                                     String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + encodedQuery.length()));
+                                    System.out.println(requestStr);
+                                    System.out.println(newRequest2);
                                     byte[] newRequestBytes = Utils.rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
 
                                     // read from byte array and write to server

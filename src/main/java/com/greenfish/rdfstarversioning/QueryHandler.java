@@ -513,6 +513,7 @@ public class QueryHandler {
         TurtleParser triplesParser = new TurtleParser();
         Model model = new LinkedHashModel();
         triplesParser.setRDFHandler(new StatementCollector(model));
+        System.out.println("Insert block: \n" + insertBlock);
         triplesParser.parse(new StringReader(insertBlock.toString()));
 
         //Bring triple statements into the format suitable for the VALUES block

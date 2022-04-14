@@ -28,18 +28,12 @@ public class QueryHandler {
     static SPARQLParser parser = new SPARQLParser();
 
     public static String timestampQuery(String query) throws Exception {
-        //TODO: transform query into timestamped query via query algebra injection
         ParsedQuery originalQuery =  parser.parseQuery(query, null);
         if (originalQuery instanceof ParsedTupleQuery) {
             TupleExpr queryTree = originalQuery.getTupleExpr();
             queryTree.visit(getTimestampingModel());
             originalQuery.setTupleExpr(queryTree);
-            String transformedQuery = new SparqlQueryRenderer().render(originalQuery);
-
-            System.out.println(queryTree);
-            System.out.println(transformedQuery);
-            return transformedQuery;
-
+            return new SparqlQueryRenderer().render(originalQuery);
         } else {
             System.out.println("There is no solution yet for timestamping queries other than tuple queries.");
             return query;

@@ -50,7 +50,6 @@ public class RequestHandler {
                             if (mQueryKeyword.find() ) {
                                 System.out.println("Modify query");
                                 baseContentLength = ("query=" + mQueryKeyword.group(2)).length();
-                                //TODO: Modify request which is sent to server
                                 String query = mQueryKeyword.group(1);
                                 String decodedStmt = java.net.URLDecoder.decode(query, StandardCharsets.UTF_8.name());
                                 String timestampedQuery ="";
@@ -61,8 +60,6 @@ public class RequestHandler {
                                     Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");
                                     Matcher m2 = p2.matcher(newRequest);
                                     String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + encodedQuery.length()));
-                                    System.out.println(requestStr);
-                                    System.out.println(newRequest2);
                                     byte[] newRequestBytes = Utils.rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
 
                                     // read from byte array and write to server
@@ -100,7 +97,6 @@ public class RequestHandler {
                                 streamToServer.write(request, 0, size);
                                 System.out.println("Parameters query= or update= were not found in the http request." +
                                         " Request was passed through unmodified.");
-                                //System.out.println("Request string: \n " + requestStr);
                             }
 
                         } else {
@@ -109,6 +105,7 @@ public class RequestHandler {
                         }
 
                     } catch (Exception e) {
+                        System.out.println("This should not happen. No exception handling yet for this case.");
                         System.out.println(e.getMessage());
                         e.printStackTrace();
                     } finally {

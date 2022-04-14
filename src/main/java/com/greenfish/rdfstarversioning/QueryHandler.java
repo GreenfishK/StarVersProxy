@@ -23,6 +23,7 @@ import java.text.MessageFormat;
 import java.util.*;
 
 public class QueryHandler {
+    //TODO: Handle queries and updates to a named graph.
 
     static SPARQLParser parser = new SPARQLParser();
 
@@ -513,8 +514,9 @@ public class QueryHandler {
         TurtleParser triplesParser = new TurtleParser();
         Model model = new LinkedHashModel();
         triplesParser.setRDFHandler(new StatementCollector(model));
-        System.out.println("Insert block: \n" + insertBlock);
         triplesParser.parse(new StringReader(insertBlock.toString()));
+
+        //TODO: Fix bug with triple statements that do not end with a dot.
 
         //Bring triple statements into the format suitable for the VALUES block
         StringBuilder valuesBlock = new StringBuilder();

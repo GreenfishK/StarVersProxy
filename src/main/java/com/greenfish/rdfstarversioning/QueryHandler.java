@@ -17,6 +17,7 @@ import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.eclipse.rdf4j.rio.ntriples.NTriplesParser;
 import org.eclipse.rdf4j.rio.turtle.TurtleParser;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.text.MessageFormat;
 import java.util.*;
@@ -43,7 +44,6 @@ public class QueryHandler {
             return query;
         }
     }
-
 
     private static QueryModelVisitor<Exception> getTimestampingModel() {
 
@@ -476,51 +476,56 @@ public class QueryHandler {
         UpdateExpr expr = updateExprs.get(0);
 
         if (expr instanceof InsertData) {
-            InsertData insertdata = ((InsertData) expr);
-            String dataBlock = insertdata.getDataBlock();
-
-            //Get rid of first few lines with prefixes
-            Scanner scanner = new Scanner(dataBlock);
-            for (int i = 0; i < insertdata.getLineNumberOffset(); i++)
-                scanner.nextLine();
-
-            //Get triple statements
-            StringBuilder insertBlock = new StringBuilder();
-            while (scanner.hasNext())
-                insertBlock.append(scanner.nextLine());
-            TurtleParser triplesParser = new TurtleParser();
-            Model model = new LinkedHashModel();
-            triplesParser.setRDFHandler(new StatementCollector(model));
-            triplesParser.parse(new StringReader(insertBlock.toString()));
-
-            //Bring triple statements into the format suitable for the VALUES block
-            StringBuilder valuesInsertBlock = new StringBuilder();
-            for (Statement stmt : model) {
-                valuesInsertBlock
-                        .append('(')
-                        .append(Utils.entityToString(stmt.getSubject()))
-                        .append(Utils.entityToString(stmt.getPredicate()))
-                        .append(Utils.entityToString(stmt.getObject()))
-                        .append(')').append('\n');
-            }
-            System.out.println(MessageFormat.format(Utils.readAllBytes("timestampedInsertTemplate"), context, valuesInsertBlock));
+            String valuesInsertBlock = prepareValueBlock(expr);
             return  MessageFormat.format(Utils.readAllBytes("timestampedInsertTemplate"), context, valuesInsertBlock);
-
-
         } else if (expr instanceof DeleteData) {
-            DeleteData deleteData = ((DeleteData) expr);
-            String dataBlock = deleteData.getDataBlock();
-            Scanner scanner = new Scanner(dataBlock);
-            for (int i = 0; i < deleteData.getLineNumberOffset(); i++)
-                scanner.nextLine();
-            StringBuilder timestampedInsertBlock = new StringBuilder();
-            while (scanner.hasNext()) {
-                timestampedInsertBlock.append("(").append(scanner.nextLine()).append(")\n");
-            }
-            return  MessageFormat.format(Utils.readAllBytes("timestampedDeleteTemplate"), context, timestampedInsertBlock);
+            String valuesDeleteBlock = prepareValueBlock(expr);
+            return  MessageFormat.format(Utils.readAllBytes("timestampedDeleteTemplate"), context, valuesDeleteBlock);
 
         }
         else throw new Exception("Update statement not covered yet");
+
+    }
+
+    private static String prepareValueBlock(Object expr) throws Exception {
+        Scanner scanner = null;
+        if (expr instanceof InsertData) {
+            //Get rid of first few lines with prefixes
+            InsertData insertdata = ((InsertData) expr);
+            String dataBlock = insertdata.getDataBlock();
+            scanner = new Scanner(dataBlock);
+            for (int i = 0; i < insertdata.getLineNumberOffset(); i++)
+                scanner.nextLine();
+        } else if (expr instanceof DeleteData) {
+            DeleteData deleteData = ((DeleteData) expr);
+            String dataBlock = deleteData.getDataBlock();
+            scanner = new Scanner(dataBlock);
+            for (int i = 0; i < deleteData.getLineNumberOffset(); i++)
+                scanner.nextLine();
+        } else {
+            throw new Exception("Expr is neither InsertData nor DeleteData.");
+        }
+
+        //Get triple statements
+        StringBuilder insertBlock = new StringBuilder();
+        while (scanner.hasNext())
+            insertBlock.append(scanner.nextLine());
+        TurtleParser triplesParser = new TurtleParser();
+        Model model = new LinkedHashModel();
+        triplesParser.setRDFHandler(new StatementCollector(model));
+        triplesParser.parse(new StringReader(insertBlock.toString()));
+
+        //Bring triple statements into the format suitable for the VALUES block
+        StringBuilder valuesBlock = new StringBuilder();
+        for (Statement stmt : model) {
+            valuesBlock
+                    .append('(')
+                    .append(Utils.entityToString(stmt.getSubject()))
+                    .append(Utils.entityToString(stmt.getPredicate()))
+                    .append(Utils.entityToString(stmt.getObject()))
+                    .append(')').append('\n');
+        }
+        return valuesBlock.toString();
 
     }
 

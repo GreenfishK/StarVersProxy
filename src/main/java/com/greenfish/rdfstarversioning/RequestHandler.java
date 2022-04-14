@@ -1,13 +1,17 @@
 package com.greenfish.rdfstarversioning;
 
+import org.apache.commons.httpclient.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.eclipse.rdf4j.query.MalformedQueryException;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,10 +35,17 @@ public class RequestHandler {
                     Pattern postKeyword = Pattern.compile("\\bPOST\\b");
                     Matcher mPostKeyword = postKeyword.matcher(requestStr);
 
-                    Pattern queryKeyword = Pattern.compile("(?<=query=).*(?=&infer)");
+                    Pattern queryKeyword = Pattern.compile("(?<=query=).*?(?=&)");
+                    //Pattern queryKeyword = Pattern.compile("(?:^|[?&])query=([^&]*)");
                     Matcher mQueryKeyword = queryKeyword.matcher(requestStr);
-                    Pattern updateKeyword = Pattern.compile("(?<=update=).*(?=&infer)");
+                    Pattern updateKeyword = Pattern.compile("(?<=update=).*?(?=&)");
                     Matcher mUpdateKeyword = updateKeyword.matcher(requestStr);
+
+                    /* List<NameValuePair> args= URLEncodedUtils.parse(url, Charset.defaultCharset());
+                    for (NameValuePair arg:args)
+                        if (arg.getName().equals("id"))
+                            System.out.println(arg.getValue()); */
+
                     try {
                         if(mPostKeyword.find())
                         {
@@ -46,6 +57,10 @@ public class RequestHandler {
                                 String decodedStmt = java.net.URLDecoder.decode(query, StandardCharsets.UTF_8.name());
                                 String timestampedQuery ="";
                                 try {
+                                    System.out.println("Request string (query)");
+                                    System.out.println(requestStr);
+                                    System.out.println("\n\n");
+
                                     timestampedQuery = QueryHandler.timestampQuery(decodedStmt);
                                     String encodedQuery = java.net.URLEncoder.encode(timestampedQuery, StandardCharsets.UTF_8.name());
 
@@ -70,6 +85,10 @@ public class RequestHandler {
                                 String decodedStmt = java.net.URLDecoder.decode(update, StandardCharsets.UTF_8.name());
                                 String timestampedUpdate = "";
                                 try {
+                                    System.out.println("Request string (update):");
+                                    System.out.println(requestStr);
+                                    System.out.println("\n\n");
+
                                     timestampedUpdate = QueryHandler.timestampUpdate(decodedStmt);
                                     String encodedInsert = java.net.URLEncoder.encode(timestampedUpdate, StandardCharsets.UTF_8.name());
 
@@ -91,7 +110,7 @@ public class RequestHandler {
                                 streamToServer.write(request, 0, size);
                                 System.out.println("Parameters query= or update= were not found in the http request." +
                                         " Request was passed through unmodified.");
-                                System.out.println("Request string: \n " + requestStr);
+                                //System.out.println("Request string: \n " + requestStr);
                             }
 
                         } else {

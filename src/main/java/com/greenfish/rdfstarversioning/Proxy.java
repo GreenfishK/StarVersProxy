@@ -39,8 +39,7 @@ public class Proxy {
                     server = new Socket(host, remoteport);
                 } catch (IOException e) {
                     PrintWriter out = new PrintWriter(client.getOutputStream());
-                    out.print("Proxy server cannot connect to " + host + ":"
-                            + remoteport + ":\n" + e + "\n");
+                    out.print("Proxy server cannot connect to " + host + ":" + remoteport + ":\n" + e + "\n");
                     out.flush();
                     client.close();
                     continue;
@@ -58,6 +57,9 @@ public class Proxy {
                     if (client != null)
                         client.close();
                 } catch (IOException e) {
+                    System.out.println("Something happend while closing the client and server connections.");
+                    System.out.println(e.getMessage());
+                    e.printStackTrace();
                 }
             }
 

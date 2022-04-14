@@ -7,6 +7,7 @@ import org.eclipse.rdf4j.query.MalformedQueryException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -90,9 +91,9 @@ public class RequestHandler {
                                 } catch (MalformedQueryException e) {
                                     System.out.println(e.getMessage());
                                     e.printStackTrace();
+                                    System.out.println("Exception for the malformed query is provided by the triple store engine.");
                                     streamToServer.write(request, 0, size);
                                 }
-
                             } else {
                                 streamToServer.write(request, 0, size);
                                 System.out.println("Parameters query= or update= were not found in the http request." +
@@ -105,10 +106,17 @@ public class RequestHandler {
                         }
 
                     } catch (Exception e) {
-                        //TODO: Send dummy request to server so that the malformed request does not block.
-                        System.out.println("This should not happen. No exception handling yet for this case.");
+                        System.out.println("Query or update cannot be handled by the proxy." +
+                                " No request will be forwarded to the server.");
                         System.out.println(e.getMessage());
                         e.printStackTrace();
+
+                        PrintWriter out = new PrintWriter(client.getOutputStream());
+                        out.print("Query or update cannot be handled by the proxy." +
+                                " No request will be forwarded to the server");
+                        out.flush();
+                        client.close();
+
                     } finally {
                         streamToServer.flush();
                     }
@@ -117,7 +125,6 @@ public class RequestHandler {
             } catch (IOException e) {
                 System.out.println(e.getMessage());
                 System.out.println("Socket closed temporarily. Will reopen with a new ping.");
-                //e.printStackTrace();
             }
 
             // the client closed the connection to us, so close our

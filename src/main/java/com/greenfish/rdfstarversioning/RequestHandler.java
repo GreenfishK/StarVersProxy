@@ -105,6 +105,7 @@ public class RequestHandler {
                         }
 
                     } catch (Exception e) {
+                        //TODO: Send dummy request to server so that the malformed request does not block.
                         System.out.println("This should not happen. No exception handling yet for this case.");
                         System.out.println(e.getMessage());
                         e.printStackTrace();

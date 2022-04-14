@@ -6,6 +6,7 @@ import org.eclipse.rdf4j.model.impl.SimpleBNode;
 import org.eclipse.rdf4j.model.impl.SimpleIRI;
 import org.eclipse.rdf4j.model.impl.SimpleLiteral;
 import org.eclipse.rdf4j.model.impl.SimpleTriple;
+import org.eclipse.rdf4j.query.algebra.Var;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -60,6 +61,13 @@ public class Utils {
         }
 
         return array;
+    }
+
+    public static String entityToString(Var var) {
+        if (var.getValue() != null)
+            return entityToString(var.getValue());
+        else
+            return "?" + var.getName();
     }
 
     public static String entityToString(Value value) {

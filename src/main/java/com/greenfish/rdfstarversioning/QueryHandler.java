@@ -4,26 +4,22 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.eclipse.rdf4j.query.GraphQueryResult;
-import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.algebra.*;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.ParsedUpdate;
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
 import org.eclipse.rdf4j.queryrender.sparql.experimental.SparqlQueryRenderer;
-import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
-import org.eclipse.rdf4j.rio.ntriples.NTriplesParser;
 import org.eclipse.rdf4j.rio.turtle.TurtleParser;
 
-import java.io.IOException;
 import java.io.StringReader;
 import java.text.MessageFormat;
 import java.util.*;
 
 public class QueryHandler {
     //TODO: Handle queries and updates to a named graph.
+    //TODO: Cover more complex queries (visit method)
 
     static SPARQLParser parser = new SPARQLParser();
 
@@ -397,7 +393,12 @@ public class QueryHandler {
 
                 Var nested = new Var();
                 nested.setName("_const1_");
-                nested.setValue(valueFactory.createIRI("<<<?s ?p ?o>> <http://example.com/metadata/versioning#valid_from> ?valid_from" + stmtCnt + ">"));
+                nested.setValue(valueFactory.createIRI(String.format("<<<%s %s %s>> <http://example.com/metadata/versioning#valid_from> ?valid_from%s>",
+                        Utils.entityToString(statementPattern.getSubjectVar()),
+                        Utils.entityToString(statementPattern.getPredicateVar()),
+                        Utils.entityToString(statementPattern.getObjectVar()),
+                        stmtCnt)));
+                //System.out.println(statementPattern.getSubjectVar().getValue().getClass());
 
                 Var valid_until_iri = new Var();
                 valid_until_iri.setName("_const_66d5ccde_uri");

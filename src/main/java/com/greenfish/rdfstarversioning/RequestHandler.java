@@ -56,6 +56,7 @@ public class RequestHandler {
                                 String timestampedQuery ="";
                                 try {
                                     timestampedQuery = QueryHandler.timestampQuery(decodedStmt);
+                                    System.out.println(timestampedQuery);
                                     String encodedQuery = java.net.URLEncoder.encode(timestampedQuery, StandardCharsets.UTF_8.name());
                                     String newRequest = mQueryKeyword.replaceFirst(encodedQuery + "$2");
                                     Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");
@@ -79,6 +80,7 @@ public class RequestHandler {
                                 String timestampedUpdate = "";
                                 try {
                                     timestampedUpdate = QueryHandler.timestampUpdate(decodedStmt);
+                                    System.out.println(timestampedUpdate);
                                     String encodedInsert = java.net.URLEncoder.encode(timestampedUpdate, StandardCharsets.UTF_8.name());
                                     String newRequest = mUpdateKeyword.replaceFirst(encodedInsert + "$2");
                                     Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");

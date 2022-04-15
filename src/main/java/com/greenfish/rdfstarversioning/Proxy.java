@@ -1,5 +1,8 @@
 package com.greenfish.rdfstarversioning;
 
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
+
 import java.io.*;
 import java.net.*;
 
@@ -26,11 +29,18 @@ public class Proxy {
     public static void runServer(String host, int remoteport, int localport) throws IOException {
         // Creating a ServerSocket to listen for connections with
         ServerSocket s = new ServerSocket(localport);
+        /*SPARQLRepository repo;
+        RepositoryConnection sparqlRepoConnection;
+        String repoId = "testTimestamping";
+        String queryEndpoint = String.format("http://localhost:7400/repositories/%s", repoId);
+        String updateEndpoint = String.format("http://localhost:7400/repositories/%s/statements", repoId);
+        repo = new SPARQLRepository(queryEndpoint, updateEndpoint); */
         while (true) {
             Socket client = null, server = null;
             try {
                 // It will wait for a connection on the local port
                 client = s.accept();
+                System.out.println("Connected to port 7480");
 
                 // Create a connection to the real server.
                 // If we cannot connect to the server, send an error to the

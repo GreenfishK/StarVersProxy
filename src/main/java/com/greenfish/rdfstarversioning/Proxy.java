@@ -1,10 +1,17 @@
 package com.greenfish.rdfstarversioning;
 
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.eclipse.rdf4j.http.client.SPARQLProtocolSession;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
 
 import java.io.*;
 import java.net.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Proxy {
     public static void main(String[] args) throws IOException {
@@ -36,9 +43,10 @@ public class Proxy {
         String updateEndpoint = String.format("http://localhost:7400/repositories/%s/statements", repoId);
         repo = new SPARQLRepository(queryEndpoint, updateEndpoint); */
         while (true) {
-            Socket client = null, server = null;
+            Socket client = null, tripleStoreServer = null;
             try {
-                // It will wait for a connection on the local port
+                // It will wait for a connection on the local port (e.g. when opening the browser and going to
+                //localhost:7480
                 client = s.accept();
                 System.out.println("Connected to port 7480");
 
@@ -46,7 +54,7 @@ public class Proxy {
                 // If we cannot connect to the server, send an error to the
                 // client, disconnect, and continue waiting for connections.
                 try {
-                    server = new Socket(host, remoteport);
+                    tripleStoreServer = new Socket(host, remoteport);
                 } catch (IOException e) {
                     PrintWriter out = new PrintWriter(client.getOutputStream());
                     out.print("Proxy server cannot connect to " + host + ":" + remoteport + ":\n" + e + "\n");
@@ -55,15 +63,15 @@ public class Proxy {
                     continue;
                 }
 
-                RequestHandler.handleClientToServerRequests(client, server);
-                RequestHandler.handleServerToClientReplies(client, server);
+                RequestHandler.handleClientToServerRequests(client, tripleStoreServer);
+                RequestHandler.handleServerToClientReplies(client, tripleStoreServer);
 
             } catch (IOException e) {
                 System.err.println(e.getMessage());
             } finally {
                 try {
-                    if (server != null)
-                        server.close();
+                    if (tripleStoreServer != null)
+                        tripleStoreServer.close();
                     if (client != null)
                         client.close();
                 } catch (IOException e) {

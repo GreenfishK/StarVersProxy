@@ -22,10 +22,10 @@ public class RequestHandler {
         return String.format("\\u%04x", (int) ch);
     }
 
-    public static void handleClientToServerRequests(Socket client, Socket server) throws IOException {
+    public static void handleClientToServerRequests(Socket client, Socket tripleStoreServer) throws IOException {
         final byte[] request = new byte[4096];
         final InputStream streamFromClient = client.getInputStream();
-        final OutputStream streamToServer = server.getOutputStream();
+        final OutputStream streamToServer = tripleStoreServer.getOutputStream();
 
         // a thread to read the client's requests and pass them
         // to the server. A separate thread for asynchronous.
@@ -46,6 +46,8 @@ public class RequestHandler {
                     Matcher mUpdateKeyword = updateKeyword.matcher(requestStr);
 
                     try {
+                        //TODO: handle GET request as queries sent via SPARQLRepository are get requests.
+                        //TODO: Fix POST requests where the value in update= has no parameters (= &)
                         if(mPostKeyword.find())
                         {
                             if (mQueryKeyword.find() ) {
@@ -100,11 +102,13 @@ public class RequestHandler {
                                 streamToServer.write(request, 0, size);
                                 System.out.println("Parameters query= or update= were not found in the http request." +
                                         " Request was passed through unmodified.");
+                                System.out.println(requestStr);
                             }
 
                         } else {
                             streamToServer.write(request, 0, size);
                             System.out.println("No query or update sent. Request was passed through unmodified.");
+                            System.out.println(requestStr);
                         }
 
                     } catch (Exception e) {
@@ -143,9 +147,9 @@ public class RequestHandler {
         t.start();
     }
 
-    public static void handleServerToClientReplies(Socket client, Socket server) throws IOException {
+    public static void handleServerToClientReplies(Socket client, Socket tripleStoreServer) throws IOException {
         // Get server streams.
-        final InputStream streamFromServer = server.getInputStream();
+        final InputStream streamFromServer = tripleStoreServer.getInputStream();
         final OutputStream streamToClient = client.getOutputStream();
 
         byte[] reply = new byte[4096];

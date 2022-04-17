@@ -127,6 +127,41 @@ public class StarVersProxyTest {
     }
 
     @Test
+    public void queryLiveDataOneStatementTest() {
+        defaultGraph = true;
+        TupleQuery query = sparqlProxyConnection.prepareTupleQuery("select * { ?s <http://example.com/queries/predicate1> ?o .}");
+
+        try (TupleQueryResult result = query.evaluate()) {
+            int c = 0;
+            while (result.hasNext()) {
+                BindingSet bs = result.next();
+                String s = bs.getValue("s").stringValue();
+                String o = bs.getValue("o").stringValue();
+                c++;
+                assertEquals("http://example.com/queries/queryThisSubject2", s);
+                assertEquals("http://example.com/queries/queryThisObject2", o);
+            }
+            assertEquals(1, c);
+        }
+    }
+
+    @Test
+    public void queryLiveDataSequencePathTest() {
+        fail("not yet implemented");
+    }
+
+    @Test
+    public void queryLiveDataMultiBGPTest() {
+        fail("not yet implemented");
+    }
+
+    @Test
+    public void queryHistoryDataTest() {
+        defaultGraph = true;
+        fail("not yet implemented");
+    }
+
+    @Test
     public void insertSingleTripleTest() throws InterruptedException {
         defaultGraph = true;
         String triple = "<http://example.com/s/insertThis1> <http://example.com/p/insertThis1> <http://example.com/o/insertThis1>";
@@ -246,41 +281,6 @@ public class StarVersProxyTest {
     }
 
     @Test
-    public void queryLiveDataOneStatementTest() {
-        defaultGraph = true;
-        TupleQuery query = sparqlProxyConnection.prepareTupleQuery("select * { ?s <http://example.com/queries/predicate1> ?o .}");
-
-        try (TupleQueryResult result = query.evaluate()) {
-            int c = 0;
-            while (result.hasNext()) {
-                BindingSet bs = result.next();
-                String s = bs.getValue("s").stringValue();
-                String o = bs.getValue("o").stringValue();
-                c++;
-                assertEquals("http://example.com/queries/queryThisSubject2", s);
-                assertEquals("http://example.com/queries/queryThisObject2", o);
-            }
-            assertEquals(1, c);
-        }
-    }
-
-    @Test
-    public void queryLiveDataSequencePathTest() {
-        fail("not yet implemented");
-    }
-
-    @Test
-    public void queryLiveDataMultiBGPTest() {
-        fail("not yet implemented");
-    }
-
-    @Test
-    public void queryHistoryDataTest() {
-        defaultGraph = true;
-        fail("not yet implemented");
-    }
-
-    @Test
     public void insertDeleteReInsertDeleteTest() throws InterruptedException {
         //TODO: Problem with concurrent updates. Consecutively inserting, deleting and re-inserting
         // leads to ignorance of the delete handling by the plugin.
@@ -345,12 +345,12 @@ public class StarVersProxyTest {
         try {
             repo.shutDown();
             sparqlRepoConnection.close();
-            runDocker(shutdownContainer());
+            //runDocker(shutdownContainer());
 
             System.out.printf("Connection shutdown and repository %s removed%n", repoId);
             System.out.println("==========================GraphDB main logs==========================");
             getLog(logFilePath).forEach(System.out::println);
-        } catch (NullPointerException | InterruptedException e) {
+        } catch (NullPointerException /*| InterruptedException*/ e) {
             System.out.println("Connection is not open and can therefore be not closed.");
         } catch (IOException e) {
             e.printStackTrace();

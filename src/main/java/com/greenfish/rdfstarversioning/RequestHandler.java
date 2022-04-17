@@ -37,80 +37,72 @@ public class RequestHandler {
                 {
                     // read from client and write to byte array
                     String requestStr = new String(request, StandardCharsets.UTF_8);
-                    Pattern postKeyword = Pattern.compile("\\bPOST\\b");
-                    Matcher mPostKeyword = postKeyword.matcher(requestStr);
+                    Matcher mPostKeyword = Pattern.compile("\\bPOST\\b").matcher(requestStr);
+                    Matcher mGetKeyword = Pattern.compile("\\bGET\\b").matcher(requestStr);
 
-                    Pattern queryKeyword = Pattern.compile("(?<=query=)(.*?)(?=&)(.*[^\u0000])(?=\u0000*)");
+                    Pattern queryKeyword = Pattern.compile("(?<=query=)(.*?)(?=[& ])(.*[^\u0000])(?=\u0000*)");
                     Matcher mQueryKeyword = queryKeyword.matcher(requestStr);
-                    Pattern updateKeyword = Pattern.compile("(?<=update=)(.*?)(?=&)(.*[^\\u0000])(?=\\u0000*)");
+                    Pattern updateKeyword = Pattern.compile("(?<=update=)(.*?)(?=& )(.*[^\\u0000])(?=\\u0000*)");
                     Matcher mUpdateKeyword = updateKeyword.matcher(requestStr);
 
                     try {
                         //TODO: handle GET request as queries sent via SPARQLRepository are get requests.
-                        //TODO: Fix POST requests where the value in update= has no parameters (= &)
-                        if(mPostKeyword.find())
-                        {
-                            if (mQueryKeyword.find() ) {
-                                System.out.println("Modify query");
-                                baseContentLength = ("query=" + mQueryKeyword.group(2)).length();
-                                String query = mQueryKeyword.group(1);
-                                String decodedStmt = java.net.URLDecoder.decode(query, StandardCharsets.UTF_8.name());
-                                String timestampedQuery ="";
-                                try {
-                                    timestampedQuery = QueryHandler.timestampQuery(decodedStmt);
-                                    System.out.println(timestampedQuery);
-                                    String encodedQuery = java.net.URLEncoder.encode(timestampedQuery, StandardCharsets.UTF_8.name());
-                                    String newRequest = mQueryKeyword.replaceFirst(encodedQuery + "$2");
-                                    Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");
-                                    Matcher m2 = p2.matcher(newRequest);
-                                    String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + encodedQuery.length()));
-                                    byte[] newRequestBytes = Utils.rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
+                        if(mGetKeyword.find() && mQueryKeyword.find()) {
+                            System.out.println("Modify query");
+                            baseContentLength = ("query=" + mQueryKeyword.group(2)).length();
+                            String query = mQueryKeyword.group(1);
+                            String decodedStmt = java.net.URLDecoder.decode(query, StandardCharsets.UTF_8.name());
+                            String timestampedQuery ="";
+                            try {
+                                timestampedQuery = QueryHandler.timestampQuery(decodedStmt);
+                                System.out.println(timestampedQuery);
+                                String encodedQuery = java.net.URLEncoder.encode(timestampedQuery, StandardCharsets.UTF_8.name());
+                                String newRequest = mQueryKeyword.replaceFirst(encodedQuery + "$2");
+                                Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");
+                                Matcher m2 = p2.matcher(newRequest);
+                                String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + encodedQuery.length()));
+                                byte[] newRequestBytes = Utils.rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
 
-                                    // read from byte array and write to server
-                                    streamToServer.write(newRequestBytes);
-                                } catch (MalformedQueryException e) {
-                                    System.out.println(e.getMessage());
-                                    e.printStackTrace();
-                                    streamToServer.write(request, 0, size);
-                                }
-
-                            } else if (mUpdateKeyword.find()) {
-                                System.out.println("Modify update");
-                                baseContentLength = ("update=" + mUpdateKeyword.group(2)).length();
-                                String update = mUpdateKeyword.group(1);
-                                String decodedStmt = java.net.URLDecoder.decode(update, StandardCharsets.UTF_8.name());
-                                String timestampedUpdate = "";
-                                try {
-                                    timestampedUpdate = QueryHandler.timestampUpdate(decodedStmt);
-                                    System.out.println(timestampedUpdate);
-                                    String encodedInsert = java.net.URLEncoder.encode(timestampedUpdate, StandardCharsets.UTF_8.name());
-                                    String newRequest = mUpdateKeyword.replaceFirst(encodedInsert + "$2");
-                                    Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");
-                                    Matcher m2 = p2.matcher(newRequest);
-                                    String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + encodedInsert.length()));
-                                    byte[] newRequestBytes = Utils.rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
-
-                                    // read from byte array and write to server
-                                    streamToServer.write(newRequestBytes);
-                                } catch (MalformedQueryException e) {
-                                    System.out.println(e.getMessage());
-                                    e.printStackTrace();
-                                    System.out.println("Exception for the malformed query is provided by the triple store engine.");
-                                    streamToServer.write(request, 0, size);
-                                }
-                            } else {
+                                // read from byte array and write to server
+                                streamToServer.write(newRequestBytes);
+                            } catch (MalformedQueryException e) {
+                                System.out.println(e.getMessage());
+                                e.printStackTrace();
                                 streamToServer.write(request, 0, size);
-                                System.out.println("Parameters query= or update= were not found in the http request." +
-                                        " Request was passed through unmodified.");
-                                System.out.println(requestStr);
+                                }
+                        }
+                        else if(mPostKeyword.find() && mUpdateKeyword.find())
+                        {
+                            //TODO: Fix POST requests where the value in update= has no parameters (= &)
+                            System.out.println("Modify update");
+                            baseContentLength = ("update=" + mUpdateKeyword.group(2)).length();
+                            String update = mUpdateKeyword.group(1);
+                            String decodedStmt = java.net.URLDecoder.decode(update, StandardCharsets.UTF_8.name());
+                            String timestampedUpdate = "";
+                            try {
+                                timestampedUpdate = QueryHandler.timestampUpdate(decodedStmt);
+                                System.out.println(timestampedUpdate);
+                                String encodedInsert = java.net.URLEncoder.encode(timestampedUpdate, StandardCharsets.UTF_8.name());
+                                String newRequest = mUpdateKeyword.replaceFirst(encodedInsert + "$2");
+                                Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");
+                                Matcher m2 = p2.matcher(newRequest);
+                                String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + encodedInsert.length()));
+                                byte[] newRequestBytes = Utils.rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
+
+                                // read from byte array and write to server
+                                streamToServer.write(newRequestBytes);
+                            } catch (MalformedQueryException e) {
+                                System.out.println(e.getMessage());
+                                e.printStackTrace();
+                                System.out.println("Exception for the malformed query is provided by the triple store engine.");
+                                streamToServer.write(request, 0, size);
                             }
 
                         } else {
                             streamToServer.write(request, 0, size);
-                            System.out.println("No query or update sent. Request was passed through unmodified.");
+                            System.out.println("No GET with ?query or POST with ?update sent. Request was passed through unmodified.");
                             System.out.println(requestStr);
                         }
-
                     } catch (Exception e) {
                         System.out.println("Query or update cannot be handled by the proxy." +
                                 " No request will be forwarded to the server.");

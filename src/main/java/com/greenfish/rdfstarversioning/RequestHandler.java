@@ -46,7 +46,6 @@ public class RequestHandler {
                     Matcher mUpdateKeyword = updateKeyword.matcher(requestStr);
 
                     try {
-                        //TODO: handle GET request as queries sent via SPARQLRepository are get requests.
                         if(mGetKeyword.find() && mQueryKeyword.find()) {
                             System.out.println("Modify query");
                             baseContentLength = ("query=" + mQueryKeyword.group(2)).length();

@@ -345,12 +345,12 @@ public class StarVersProxyTest {
         try {
             repo.shutDown();
             sparqlRepoConnection.close();
-            //runDocker(shutdownContainer());
+            runDocker(shutdownContainer());
 
             System.out.printf("Connection shutdown and repository %s removed%n", repoId);
             System.out.println("==========================GraphDB main logs==========================");
             getLog(logFilePath).forEach(System.out::println);
-        } catch (NullPointerException /*| InterruptedException*/ e) {
+        } catch (NullPointerException | InterruptedException e) {
             System.out.println("Connection is not open and can therefore be not closed.");
         } catch (IOException e) {
             e.printStackTrace();
@@ -378,12 +378,11 @@ public class StarVersProxyTest {
                 tempScript));
         PrintWriter printWriter = new PrintWriter(streamWriter);
 
-        printWriter.println("cd src/test/resources/graphdb-docker-master/preload");
-        printWriter.println("echo \"Logs from GraphDB for preload disabled in docker-compose file ... \"");
-        printWriter.println("docker-compose up -d");
+        printWriter.println("cd src/test/resources/graphdb-docker-master");
+        printWriter.println("docker-compose up -d preload");
+        printWriter.println("docker-compose up -d database");
+        printWriter.println("docker-compose up -d proxy");
 
-        printWriter.println("cd ..");
-        printWriter.println("docker-compose up -d");
 
         printWriter.close();
 

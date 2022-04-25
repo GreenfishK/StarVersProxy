@@ -56,6 +56,8 @@ public class Proxy {
                     continue;
                 }
 
+                //TODO: Implement a http client which fixes the problem with overlapping byte streams from previous
+                //  requests.
                 RequestHandler.handleClientToServerRequests(client, tripleStoreServer);
                 RequestHandler.handleServerToClientReplies(client, tripleStoreServer);
 

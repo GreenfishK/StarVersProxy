@@ -42,7 +42,7 @@ public class RequestHandler {
 
                     Pattern queryKeyword = Pattern.compile("(?<=query=)(.*?)(?=[& ])(.*[^\u0000])(?=\u0000*)");
                     Matcher mQueryKeyword = queryKeyword.matcher(requestStr);
-                    Pattern updateKeyword = Pattern.compile("(?<=update=)(.*?)(?=& )(.*[^\\u0000])(?=\\u0000*)");
+                    Pattern updateKeyword = Pattern.compile("(?<=update=)(.*?)(?=[&\u0000])((?:&.[^\u0000]+)*)(?=\u0000*)"); //(?= *) //((?:&.[^ ]+)*)
                     Matcher mUpdateKeyword = updateKeyword.matcher(requestStr);
 
                     try {
@@ -72,7 +72,6 @@ public class RequestHandler {
                         }
                         else if(mPostKeyword.find() && mUpdateKeyword.find())
                         {
-                            //TODO: Fix POST requests where the value in update= has no parameters (= &)
                             System.out.println("Modify update");
                             baseContentLength = ("update=" + mUpdateKeyword.group(2)).length();
                             String update = mUpdateKeyword.group(1);

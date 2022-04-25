@@ -76,7 +76,7 @@ public class StarVersProxyTest {
                 throw new ServerErrorException("Your GraphDB server might not be running.");
             }
 
-            //Test queries against SPARQL endpoint
+            //Test queries against SPARQL endpoint for proxy
             try {
                 TupleQuery query = sparqlProxyConnection.prepareTupleQuery("select * { ?s ?p ?o }");
                 try (TupleQueryResult result = query.evaluate()) {
@@ -93,8 +93,7 @@ public class StarVersProxyTest {
             // Test update statements against SPARQL endpoint
             try (RepositoryConnection connection = sparqlRepoConnection) {
                 connection.begin();
-                String updateString = "delete data {graph <http://example.com/testGraph> " +
-                        "{<http://example.com/s/testConnection> <http://example.com/p/testConnection> <http://example.com/o/testConnection>}}";
+                String updateString = "delete data {<http://example.com/s/testConnection> <http://example.com/p/testConnection> <http://example.com/o/testConnection> .}";
                 connection.prepareUpdate(updateString).execute();
                 connection.commit();
                 System.out.println("Write statements are executable against the embedded repository");
@@ -103,11 +102,10 @@ public class StarVersProxyTest {
                 throw new RepositoryException(e.getMessage());
             }
 
-            // Test update statements against SPARQL endpoint
+            // Test update statements against SPARQL endpoint for proxy
             try (RepositoryConnection connection = sparqlProxyConnection) {
                 connection.begin();
-                String updateString = "delete data {graph <http://example.com/testGraph> " +
-                        "{<http://example.com/s/testConnection> <http://example.com/p/testConnection> <http://example.com/o/testConnection>}}";
+                String updateString = "delete data {<http://example.com/s/testConnection> <http://example.com/p/testConnection> <http://example.com/o/testConnection> .}";
                 connection.prepareUpdate(updateString).execute();
                 connection.commit();
                 System.out.println("Write statements are executable against the sparql proxy server");
@@ -165,7 +163,7 @@ public class StarVersProxyTest {
     public void insertSingleTripleTest() throws InterruptedException {
         defaultGraph = true;
         String triple = "<http://example.com/s/insertThis1> <http://example.com/p/insertThis1> <http://example.com/o/insertThis1>";
-        String updateString = String.format("insert data {%s}", triple);
+        String updateString = String.format("insert data {%s .}", triple);
         sparqlProxyConnection.begin();
         sparqlProxyConnection.prepareUpdate(updateString).execute();
         sparqlProxyConnection.commit();
@@ -175,7 +173,7 @@ public class StarVersProxyTest {
 
         TupleQuery query = sparqlRepoConnection.prepareTupleQuery(String.format("select * { <<<<%s>> ?x ?y>> ?a ?b }",triple));
         try (TupleQueryResult result = query.evaluate()) {
-            assertTrue("Must have one double-nested triples in the result", result.hasNext());
+            //assertTrue("Must have one double-nested triples in the result", result.hasNext());
             assertEquals(1, result.stream().count());
         }
     }
@@ -345,12 +343,12 @@ public class StarVersProxyTest {
         try {
             repo.shutDown();
             sparqlRepoConnection.close();
-            runDocker(shutdownContainer());
+            //runDocker(shutdownContainer());
 
             System.out.printf("Connection shutdown and repository %s removed%n", repoId);
             System.out.println("==========================GraphDB main logs==========================");
             getLog(logFilePath).forEach(System.out::println);
-        } catch (NullPointerException | InterruptedException e) {
+        } catch (NullPointerException e) {
             System.out.println("Connection is not open and can therefore be not closed.");
         } catch (IOException e) {
             e.printStackTrace();

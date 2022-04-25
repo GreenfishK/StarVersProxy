@@ -40,10 +40,11 @@ public class RequestHandler {
                     Matcher mPostKeyword = Pattern.compile("\\bPOST\\b").matcher(requestStr);
                     Matcher mGetKeyword = Pattern.compile("\\bGET\\b").matcher(requestStr);
 
-                    Pattern queryKeyword = Pattern.compile("(?<=query=)(.*?)(?=[& ])(.*[^\u0000])(?=\u0000*)");
+                    Pattern queryKeyword = Pattern.compile("(?<=query=)([\\w.%+*]*?)(?=[-\u0000\\s&])((?:&.[^-\u0000\\s]+)*)(?=\u0000*)");//("(?<=query=)(.*?)(?=[& ])(.*[^\u0000])(?=\u0000*)");
                     Matcher mQueryKeyword = queryKeyword.matcher(requestStr);
-                    Pattern updateKeyword = Pattern.compile("(?<=update=)(.*?)(?=[&\u0000])((?:&.[^\u0000]+)*)(?=\u0000*)"); //(?= *) //((?:&.[^ ]+)*)
+                    Pattern updateKeyword = Pattern.compile("(?<=update=)([\\w.%+*]*?)(?=[-\u0000\\s&])((?:&.[^-\u0000\\s]+)*)(?=\u0000*)"); //(?= *) //((?:&.[^ ]+)*)
                     Matcher mUpdateKeyword = updateKeyword.matcher(requestStr);
+                    System.out.println(requestStr);
 
                     try {
                         if(mGetKeyword.find() && mQueryKeyword.find()) {
@@ -64,11 +65,13 @@ public class RequestHandler {
 
                                 // read from byte array and write to server
                                 streamToServer.write(newRequestBytes);
+                                streamToServer.flush();
                             } catch (MalformedQueryException e) {
                                 System.out.println(e.getMessage());
                                 e.printStackTrace();
                                 streamToServer.write(request, 0, size);
-                                }
+                                streamToServer.flush();
+                            }
                         }
                         else if(mPostKeyword.find() && mUpdateKeyword.find())
                         {
@@ -78,6 +81,7 @@ public class RequestHandler {
                             String decodedStmt = java.net.URLDecoder.decode(update, StandardCharsets.UTF_8.name());
                             String timestampedUpdate = "";
                             try {
+                                System.out.println(decodedStmt);
                                 timestampedUpdate = QueryHandler.timestampUpdate(decodedStmt);
                                 System.out.println(timestampedUpdate);
                                 String encodedInsert = java.net.URLEncoder.encode(timestampedUpdate, StandardCharsets.UTF_8.name());
@@ -94,10 +98,12 @@ public class RequestHandler {
                                 e.printStackTrace();
                                 System.out.println("Exception for the malformed query is provided by the triple store engine.");
                                 streamToServer.write(request, 0, size);
+                                streamToServer.flush();
                             }
 
                         } else {
                             streamToServer.write(request, 0, size);
+                            streamToServer.flush();
                             System.out.println("No GET with ?query or POST with ?update sent. Request was passed through unmodified.");
                             System.out.println(requestStr);
                         }

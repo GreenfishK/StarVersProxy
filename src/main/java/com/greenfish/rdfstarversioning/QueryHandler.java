@@ -388,7 +388,6 @@ public class QueryHandler {
             @Override
             public void meet(StatementPattern statementPattern) throws Exception {
                 stmtCnt++;
-                System.out.println("meet statementPattern");
                 ValueFactory valueFactory = SimpleValueFactory.getInstance();
 
                 Var nested = new Var();

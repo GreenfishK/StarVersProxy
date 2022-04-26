@@ -1,14 +1,15 @@
 package com.greenfish.rdfstarversioning;
 
 import org.apache.commons.httpclient.NameValuePair;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.eclipse.rdf4j.query.MalformedQueryException;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
+import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.Socket;
+import java.net.URI;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -24,6 +25,7 @@ public class RequestHandler {
 
     public static void handleClientToServerRequests(Socket client, Socket tripleStoreServer) throws IOException {
         final byte[] request = new byte[4096];
+        final int proxyPort = 7480;
         final InputStream streamFromClient = client.getInputStream();
         final OutputStream streamToServer = tripleStoreServer.getOutputStream();
 
@@ -33,8 +35,7 @@ public class RequestHandler {
             int baseContentLength;
             int size;
             try {
-                while ((size = streamFromClient.read(request)) != -1)
-                {
+                while ((size = streamFromClient.read(request)) != -1) {
                     // read from client and write to byte array
                     String requestStr = new String(request, StandardCharsets.UTF_8);
                     Matcher mPostKeyword = Pattern.compile("\\bPOST\\b").matcher(requestStr);
@@ -46,23 +47,38 @@ public class RequestHandler {
                     Matcher mUpdateKeyword = updateKeyword.matcher(requestStr);
 
                     try {
-                        if(mGetKeyword.find() && mQueryKeyword.find()) {
+                        if((mPostKeyword.find() || mGetKeyword.find()) && mQueryKeyword.find()) {
                             System.out.println("Modify query");
-                            baseContentLength = ("query=" + mQueryKeyword.group(2)).length();
                             String query = mQueryKeyword.group(1);
                             String decodedStmt = java.net.URLDecoder.decode(query, StandardCharsets.UTF_8.name());
-                            String timestampedQuery ="";
                             try {
-                                timestampedQuery = QueryHandler.timestampQuery(decodedStmt);
+                                String timestampedQuery = QueryHandler.timestampQuery(decodedStmt);
                                 String encodedQuery = java.net.URLEncoder.encode(timestampedQuery, StandardCharsets.UTF_8.name());
-                                String newRequest = mQueryKeyword.replaceFirst(encodedQuery + "$2");
-                                Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");
-                                Matcher m2 = p2.matcher(newRequest);
-                                String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + encodedQuery.length()));
-                                byte[] newRequestBytes = Utils.rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
+
+                                //Create connection
+                                StringBuilder sb = new StringBuilder();
+                                sb.append("GET").append(" ").append("/repositories/testTimestamping")
+                                        .append("?query=").append(encodedQuery).append(" ").append("HTTP/1.1");
+                                sb.append("\r\nAccept: ").append("text/csv;q=0.8," +
+                                        " application/x-sparqlstar-results+json;q=0.8," +
+                                        " application/sparql-results+json;q=0.8," +
+                                        " application/json;q=0.8," +
+                                        " application/sparql-results+xml," +
+                                        " application/xml," +
+                                        " text/tab-separated-values;q=0.8," +
+                                        " application/x-sparqlstar-results+xml;q=0.8," +
+                                        " text/x-tab-separated-values-star;q=0.8," +
+                                        " application/x-sparqlstar-results+tsv;q=0.8," +
+                                        " application/x-binary-rdf-results-table;q=0.8");
+                                sb.append("\r\nHost: ").append(tripleStoreServer.getInetAddress().getHostName())
+                                        .append(":").append(proxyPort);
+                                sb.append("\r\nConnection: ").append("Keep-Alive");
+                                sb.append("\r\nUser-Agent: ").append("Java Socket (Proxy Server)");
+                                sb.append("\r\nAccept-Encoding: ").append("gzip,deflate");
+                                sb.append("\r\n\r\n");
 
                                 // read from byte array and write to server
-                                streamToServer.write(newRequestBytes);
+                                streamToServer.write(sb.toString().getBytes(StandardCharsets.UTF_8));
                             } catch (MalformedQueryException e) {
                                 System.out.println(e.getMessage());
                                 e.printStackTrace();
@@ -86,9 +102,27 @@ public class RequestHandler {
                                 Matcher m2 = p2.matcher(newRequest);
                                 String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + encodedInsert.length()));
                                 byte[] newRequestBytes = Utils.rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
+                                System.out.println(new String(newRequestBytes));
+
+                                //Create connection
+                                StringBuilder sb = new StringBuilder();
+                                sb.append("POST").append(" ").append("/repositories/testTimestamping/statements")
+                                        .append(" ").append("HTTP/1.1");
+                                sb.append("Content-Type: ").append("application/x-www-form-urlencoded; charset=utf-8");
+                                sb.append("Content-Length: ").append(baseContentLength + encodedInsert.length());
+                                sb.append("\r\nHost: ").append(tripleStoreServer.getInetAddress().getHostName())
+                                        .append(":").append(proxyPort);
+                                sb.append("\r\nConnection: ").append("Keep-Alive");
+                                sb.append("\r\nUser-Agent: ").append("Apache-HttpClient/4.5.13 (Java/11.0.13)");
+                                sb.append("\r\nAccept-Encoding: ").append("gzip,deflate");
+                                sb.append("\r\n");
+                                sb.append("update=").append(encodedInsert);
+                                sb.append("\r\n\r\n");
+
+                                System.out.println(sb);
 
                                 // read from byte array and write to server
-                                streamToServer.write(newRequestBytes);
+                                streamToServer.write(sb.toString().getBytes(StandardCharsets.UTF_8));
                             } catch (MalformedQueryException e) {
                                 System.out.println(e.getMessage());
                                 e.printStackTrace();

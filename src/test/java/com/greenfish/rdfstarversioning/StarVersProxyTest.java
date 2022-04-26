@@ -77,7 +77,7 @@ public class StarVersProxyTest {
             }
 
             //Test queries against SPARQL endpoint for proxy
-            /*try {
+            try {
                 TupleQuery query = sparqlProxyConnection.prepareTupleQuery("select * { ?s ?p ?o }");
                 try (TupleQueryResult result = query.evaluate()) {
                     assertTrue("Triples must be preloaded from the /import directory.", result.hasNext());
@@ -88,7 +88,7 @@ public class StarVersProxyTest {
             } catch (QueryEvaluationException e) {
                 System.err.println(e.getClass() + ":" + e.getMessage());
                 throw new ServerErrorException("Your Proxy server might not be running.");
-            }*/
+            }
 
             // Test update statements against SPARQL endpoint
             try (RepositoryConnection connection = sparqlRepoConnection) {
@@ -103,7 +103,7 @@ public class StarVersProxyTest {
             }
 
             // Test update statements against SPARQL endpoint for proxy
-            /*try (RepositoryConnection connection = sparqlProxyConnection) {
+            try (RepositoryConnection connection = sparqlProxyConnection) {
                 connection.begin();
                 String updateString = "delete data {<http://example.com/s/testConnection> <http://example.com/p/testConnection> <http://example.com/o/testConnection> .}";
                 connection.prepareUpdate(updateString).execute();
@@ -112,7 +112,7 @@ public class StarVersProxyTest {
             } catch (UpdateExecutionException e) {
                 System.err.println(e.getClass() + ":" + e.getMessage());
                 throw new RepositoryException(e.getMessage());
-            }*/
+            }
 
 
         } catch (RDFHandlerException | RDFParseException | RepositoryConfigException | ServerErrorException | RepositoryException | IOException | InterruptedException e) {
@@ -163,7 +163,7 @@ public class StarVersProxyTest {
     public void insertSingleTripleTest() throws InterruptedException {
         defaultGraph = true;
         String triple = "<http://example.com/s/insertThis1> <http://example.com/p/insertThis1> <http://example.com/o/insertThis1>";
-        String updateString = String.format("insert data {%s .}", triple);
+        String updateString = String.format(" insert data {%s .}", triple);
         sparqlProxyConnection.begin();
         sparqlProxyConnection.prepareUpdate(updateString).execute();
         sparqlProxyConnection.commit();
@@ -183,7 +183,7 @@ public class StarVersProxyTest {
         defaultGraph = true;
         String triple1 = "<http://example.com/s/insertThis2> <http://example.com/p/insertThis2> <http://example.com/o/insertThis2>";
         String triple2 = "<http://example.com/s/insertThis3> <http://example.com/p/insertThis3> <http://example.com/o/insertThis3>";
-        String updateString = String.format("insert data {%s. %s .}", triple1, triple2);
+        String updateString = String.format("insert data {%s . %s .}", triple1, triple2);
         sparqlProxyConnection.begin();
         sparqlProxyConnection.prepareUpdate(updateString).execute();
         sparqlProxyConnection.commit();
@@ -205,7 +205,7 @@ public class StarVersProxyTest {
         String updateString;
         String triple = "<http://example.com/s/deleteThis1> <http://example.com/p/deleteThis1> <http://example.com/o/deleteThis1>";
 
-        updateString = String.format("delete data {%s}", triple);
+        updateString = String.format("delete data {%s .}", triple);
         sparqlProxyConnection.begin();
         sparqlProxyConnection.prepareUpdate(updateString).execute();
         sparqlProxyConnection.commit();
@@ -280,38 +280,26 @@ public class StarVersProxyTest {
 
     @Test
     public void insertDeleteReInsertDeleteTest() throws InterruptedException {
-        //TODO: Problem with concurrent updates. Consecutively inserting, deleting and re-inserting
-        // leads to ignorance of the delete handling by the plugin.
-        /*
-         DB requests
-         user: insert
-         plugin: pluginUpdateRequestCommitted=true
-         plugin-insert template: delete block
-         user: delete (does not get processed by plugin because pluginUpdateRequestCommitted=true)
-         plugin-insert template: insert block
-         plugin: pluginUpdateRequestCommitted=false
-
-         */
         defaultGraph = true;
         String triple = "<http://example.com/test#reinsertThisS1> <http://example.com/test#p> <http://example.com/test#reinsertThisO1>";
-        String updateString = String.format("insert data {%s}", triple);
+        String updateString = String.format("insert data {%s .}", triple);
         sparqlProxyConnection.begin();
         sparqlProxyConnection.prepareUpdate(updateString).execute();
         sparqlProxyConnection.commit();
         Thread.sleep(500);
 
-        updateString = String.format("delete data {%s}", triple);
+        updateString = String.format("delete data {%s .}", triple);
         sparqlProxyConnection.begin();
         sparqlProxyConnection.prepareUpdate(updateString).execute();
         sparqlProxyConnection.commit();
 
-        updateString = String.format("insert data {%s}", triple);
+        updateString = String.format("insert data {%s .}", triple);
         sparqlProxyConnection.begin();
         sparqlProxyConnection.prepareUpdate(updateString).execute();
         sparqlProxyConnection.commit();
         Thread.sleep(500);
 
-        updateString = String.format("delete data {%s}", triple);
+        updateString = String.format("delete data {%s .}", triple);
         sparqlProxyConnection.begin();
         sparqlProxyConnection.prepareUpdate(updateString).execute();
         sparqlProxyConnection.commit();
@@ -320,7 +308,7 @@ public class StarVersProxyTest {
 
         TupleQuery query = sparqlRepoConnection.prepareTupleQuery(String.format("select * { <<<<%s>> ?x ?y>> ?a ?b }",triple));
         try (TupleQueryResult result = query.evaluate()) {
-            assertEquals(1, result.stream().count());
+            assertEquals(2, result.stream().count());
         }
         try (TupleQueryResult result = query.evaluate()) {
             while (result.hasNext()) {
@@ -333,8 +321,6 @@ public class StarVersProxyTest {
 
             }
         }
-
-
     }
 
     @AfterClass
@@ -350,21 +336,24 @@ public class StarVersProxyTest {
             getLog(logFilePath).forEach(System.out::println);
         } catch (NullPointerException e) {
             System.out.println("Connection is not open and can therefore be not closed.");
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
     }
 
-    private static void runDocker(File file) throws IOException, InterruptedException {
+    private static void runDocker(File file) throws IOException {
         Process process;
         try {
             ProcessBuilder pb = new ProcessBuilder("bash", file.toString());
             pb.inheritIO();
             process = pb.start();
             process.waitFor();
-
-        } finally {
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            System.out.println("Docker was interrupted.");
+        }
+        finally {
             file.delete();
         }
     }
@@ -423,11 +412,13 @@ public class StarVersProxyTest {
         PrintWriter printWriter = new PrintWriter(streamWriter);
 
         printWriter.println("cd src/test/resources/graphdb-docker-master");
-        printWriter.println("docker-compose down");
+        printWriter.println("docker-compose stop proxy");
+        printWriter.println("docker-compose stop database");
+
 
         printWriter.close();
-
         return tempScript;
+
     }
 
 }

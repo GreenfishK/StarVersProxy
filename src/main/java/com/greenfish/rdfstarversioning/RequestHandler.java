@@ -3,7 +3,6 @@ import org.eclipse.rdf4j.query.MalformedQueryException;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -70,7 +69,6 @@ public class RequestHandler {
                                 sb.append("\r\nUser-Agent: ").append("java.net.socket application (Proxy Server)");
                                 sb.append("\r\nAccept-Encoding: ").append("gzip,deflate");
                                 sb.append("\r\n\r\n");
-                                System.out.println(sb);
 
                                 // read from byte array and write to server
                                 streamToServer.write(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -112,7 +110,6 @@ public class RequestHandler {
                                 sb.append("\r\nAccept-Encoding: ").append("gzip,deflate");
                                 sb.append("\r\n\r\n");
                                 sb.append("update=").append(encodedInsert).append(params);
-                                System.out.println(sb);
 
                                 // read from byte array and write to server
                                 streamToServer.write(sb.toString().getBytes(StandardCharsets.UTF_8));

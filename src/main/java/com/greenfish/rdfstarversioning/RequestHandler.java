@@ -3,6 +3,7 @@ import org.eclipse.rdf4j.query.MalformedQueryException;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,17 +32,25 @@ public class RequestHandler {
                     Matcher mContentLength = Pattern.compile("\\bContent-Length: (\\d*)").matcher(requestStr);
 
                     try {
-                        if((mPostKeyword.find(0) || mGetKeyword.find(0)) && mQueryKeyword.find(0)) {
+                        if(mQueryKeyword.find(0)) {
                             System.out.println("Timestamp query");
-                            String query = mQueryKeyword.group(1);
-                            String decodedStmt = java.net.URLDecoder.decode(query, StandardCharsets.UTF_8.name());
+                            String sparqlEndpoint = "";
+                            if (mGetKeyword.find(0))
+                                sparqlEndpoint = mGetKeyword.group(1);
+                            else if (mPostKeyword.find(0))
+                                sparqlEndpoint = mPostKeyword.group(1);
+                            else
+                                continue;
+                            String queryUrlPropertyValue = mQueryKeyword.group(1);
+                            String[] queryAndParams = queryUrlPropertyValue.split("&");
+                            String decodedStmt = java.net.URLDecoder.decode(queryAndParams[0], StandardCharsets.UTF_8.name());
                             try {
                                 String timestampedQuery = QueryHandler.timestampQuery(decodedStmt);
                                 String encodedQuery = java.net.URLEncoder.encode(timestampedQuery, StandardCharsets.UTF_8.name());
 
                                 //Create connection
                                 StringBuilder sb = new StringBuilder();
-                                sb.append("GET").append(" ").append(mGetKeyword.group(1))
+                                sb.append("GET").append(" ").append(sparqlEndpoint)
                                         .append("?query=").append(encodedQuery).append(" ").append("HTTP/1.1");
                                 sb.append("\r\nContent-Type: application/x-www-form-urlencoded; charset=utf-8");
                                 sb.append("\r\nAccept: ").append("text/csv;q=0.8," +
@@ -61,6 +70,7 @@ public class RequestHandler {
                                 sb.append("\r\nUser-Agent: ").append("java.net.socket application (Proxy Server)");
                                 sb.append("\r\nAccept-Encoding: ").append("gzip,deflate");
                                 sb.append("\r\n\r\n");
+                                System.out.println(sb);
 
                                 // read from byte array and write to server
                                 streamToServer.write(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -75,7 +85,15 @@ public class RequestHandler {
                             System.out.println("Timestamp update");
                             baseContentLength = ("update=").length();
                             String updateUrlPropertyValue = mUpdateKeyword.group(1).substring(0, Integer.parseInt(mContentLength.group(1)) - baseContentLength);
-                            String decodedStmt = java.net.URLDecoder.decode(updateUrlPropertyValue, StandardCharsets.UTF_8.name());
+                            String[] queryAndParams = updateUrlPropertyValue.split("&");
+                            StringBuilder params = new StringBuilder();
+                            for (int i = 1; i <queryAndParams.length; i++) {
+                                params.append("&").append(queryAndParams[i]);
+                            }
+                            baseContentLength += params.length();
+                            System.out.println(baseContentLength);
+                            System.out.println(params);
+                            String decodedStmt = java.net.URLDecoder.decode(queryAndParams[0], StandardCharsets.UTF_8.name());
                             String timestampedUpdate = "";
                             try {
                                 timestampedUpdate = QueryHandler.timestampUpdate(decodedStmt);
@@ -93,7 +111,8 @@ public class RequestHandler {
                                 sb.append("\r\nUser-Agent: ").append("java.net.socket application (Proxy Server)\"");
                                 sb.append("\r\nAccept-Encoding: ").append("gzip,deflate");
                                 sb.append("\r\n\r\n");
-                                sb.append("update=").append(encodedInsert);
+                                sb.append("update=").append(encodedInsert).append(params);
+                                System.out.println(sb);
 
                                 // read from byte array and write to server
                                 streamToServer.write(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -107,7 +126,6 @@ public class RequestHandler {
                         } else {
                             streamToServer.write(request, 0, size);
                             System.out.println("No GET with ?query or POST with ?update sent. Request was passed through unmodified.");
-                            System.out.println(requestStr);
                         }
                     } catch (Exception e) {
                         System.out.println("Query or update cannot be handled by the proxy." +

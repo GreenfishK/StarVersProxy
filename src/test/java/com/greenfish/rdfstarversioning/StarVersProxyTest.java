@@ -77,7 +77,7 @@ public class StarVersProxyTest {
             }
 
              //Test queries against SPARQL endpoint for proxy
-             /*try {
+             try {
                 TupleQuery query = sparqlProxyConnection.prepareTupleQuery("select * { ?s ?p ?o }");
                 try (TupleQueryResult result = query.evaluate()) {
                     assertTrue("Triples must be preloaded from the /import directory.", result.hasNext());
@@ -88,7 +88,7 @@ public class StarVersProxyTest {
             } catch (QueryEvaluationException e) {
                 System.err.println(e.getClass() + ":" + e.getMessage());
                 throw new ServerErrorException("Your Proxy server might not be running.");
-            }*/
+            }
 
             // Test update statements against SPARQL endpoint
             try (RepositoryConnection connection = sparqlRepoConnection) {
@@ -103,7 +103,7 @@ public class StarVersProxyTest {
             }
 
             // Test update statements against SPARQL endpoint for proxy
-            /*try (RepositoryConnection connection = sparqlProxyConnection) {
+            try (RepositoryConnection connection = sparqlProxyConnection) {
                 connection.begin();
                 String updateString = "delete data {<http://example.com/s/testConnection> <http://example.com/p/testConnection> <http://example.com/o/testConnection> .}";
                 connection.prepareUpdate(updateString).execute();
@@ -112,7 +112,7 @@ public class StarVersProxyTest {
             } catch (UpdateExecutionException e) {
                 System.err.println(e.getClass() + ":" + e.getMessage());
                 throw new RepositoryException(e.getMessage());
-            }*/
+            }
 
 
         } catch (RDFHandlerException | RDFParseException | RepositoryConfigException | ServerErrorException | RepositoryException | IOException | InterruptedException e) {

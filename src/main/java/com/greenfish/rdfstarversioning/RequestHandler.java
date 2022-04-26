@@ -8,9 +8,6 @@ import java.util.regex.Pattern;
 
 public class RequestHandler {
 
-    private static String getUnicodeCharacterOfChar(char ch) {
-        return String.format("\\u%04x", (int) ch);
-    }
 
     public static void handleClientToServerRequests(Socket client, Socket tripleStoreServer) throws IOException {
         final byte[] request = new byte[4096];
@@ -27,8 +24,8 @@ public class RequestHandler {
                 while ((size = streamFromClient.read(request)) != -1) {
                     // read from client and write to byte array
                     String requestStr = new String(request, StandardCharsets.UTF_8);
-                    Matcher mGetKeyword = Pattern.compile("^GET").matcher(requestStr);
-                    Matcher mPostKeyword = Pattern.compile("^POST").matcher(requestStr);
+                    Matcher mGetKeyword = Pattern.compile("^GET (.*?)[? ]").matcher(requestStr);
+                    Matcher mPostKeyword = Pattern.compile("^POST (.*?)[? ]").matcher(requestStr);
                     Matcher mQueryKeyword = Pattern.compile("(?<=query=)([\\w.%+*]*?)(?=[-\u0000\\s&])((?:&.[^-\u0000\\s]+)*)(?=\u0000*)").matcher(requestStr);
                     Matcher mUpdateKeyword = Pattern.compile("\\bupdate=(.*)").matcher(requestStr);
                     Matcher mContentLength = Pattern.compile("\\bContent-Length: (\\d*)").matcher(requestStr);
@@ -44,8 +41,9 @@ public class RequestHandler {
 
                                 //Create connection
                                 StringBuilder sb = new StringBuilder();
-                                sb.append("GET").append(" ").append("/repositories/testTimestamping")
+                                sb.append("GET").append(" ").append(mGetKeyword.group(1))
                                         .append("?query=").append(encodedQuery).append(" ").append("HTTP/1.1");
+                                sb.append("\r\nContent-Type: application/x-www-form-urlencoded; charset=utf-8");
                                 sb.append("\r\nAccept: ").append("text/csv;q=0.8," +
                                         " application/x-sparqlstar-results+json;q=0.8," +
                                         " application/sparql-results+json;q=0.8," +
@@ -77,7 +75,6 @@ public class RequestHandler {
                             System.out.println("Timestamp update");
                             baseContentLength = ("update=").length();
                             String updateUrlPropertyValue = mUpdateKeyword.group(1).substring(0, Integer.parseInt(mContentLength.group(1)) - baseContentLength);
-                            System.out.println(updateUrlPropertyValue);
                             String decodedStmt = java.net.URLDecoder.decode(updateUrlPropertyValue, StandardCharsets.UTF_8.name());
                             String timestampedUpdate = "";
                             try {
@@ -86,7 +83,7 @@ public class RequestHandler {
 
                                 //Create connection
                                 StringBuilder sb = new StringBuilder();
-                                sb.append("POST").append(" ").append("/repositories/testTimestamping/statements")
+                                sb.append("POST").append(" ").append(mPostKeyword.group(1))
                                         .append(" ").append("HTTP/1.1");
                                 sb.append("\r\nContent-Type: ").append("application/x-www-form-urlencoded; charset=utf-8");
                                 sb.append("\r\nContent-Length: ").append(baseContentLength + encodedInsert.length());

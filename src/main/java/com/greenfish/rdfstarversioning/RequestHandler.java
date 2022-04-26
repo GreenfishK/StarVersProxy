@@ -1,19 +1,8 @@
 package com.greenfish.rdfstarversioning;
-
-import org.apache.commons.httpclient.NameValuePair;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.client.utils.URLEncodedUtils;
 import org.eclipse.rdf4j.query.MalformedQueryException;
-
 import java.io.*;
-import java.net.HttpURLConnection;
 import java.net.Socket;
-import java.net.URI;
-import java.net.URL;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,17 +27,15 @@ public class RequestHandler {
                 while ((size = streamFromClient.read(request)) != -1) {
                     // read from client and write to byte array
                     String requestStr = new String(request, StandardCharsets.UTF_8);
-                    Matcher mPostKeyword = Pattern.compile("\\bPOST\\b").matcher(requestStr);
-                    Matcher mGetKeyword = Pattern.compile("\\bGET\\b").matcher(requestStr);
-
-                    Pattern queryKeyword = Pattern.compile("(?<=query=)([\\w.%+*]*?)(?=[-\u0000\\s&])((?:&.[^-\u0000\\s]+)*)(?=\u0000*)");//("(?<=query=)(.*?)(?=[& ])(.*[^\u0000])(?=\u0000*)");
-                    Matcher mQueryKeyword = queryKeyword.matcher(requestStr);
-                    Pattern updateKeyword = Pattern.compile("(?<=update=)([\\w.%+*]*?)(?=[-\u0000\\s&])((?:&.[^-\u0000\\s]+)*)(?=\u0000*)"); //(?= *) //((?:&.[^ ]+)*)
-                    Matcher mUpdateKeyword = updateKeyword.matcher(requestStr);
+                    Matcher mGetKeyword = Pattern.compile("^GET").matcher(requestStr);
+                    Matcher mPostKeyword = Pattern.compile("^POST").matcher(requestStr);
+                    Matcher mQueryKeyword = Pattern.compile("(?<=query=)([\\w.%+*]*?)(?=[-\u0000\\s&])((?:&.[^-\u0000\\s]+)*)(?=\u0000*)").matcher(requestStr);
+                    Matcher mUpdateKeyword = Pattern.compile("\\bupdate=(.*)").matcher(requestStr);
+                    Matcher mContentLength = Pattern.compile("\\bContent-Length: (\\d*)").matcher(requestStr);
 
                     try {
-                        if((mPostKeyword.find() || mGetKeyword.find()) && mQueryKeyword.find()) {
-                            System.out.println("Modify query");
+                        if((mPostKeyword.find(0) || mGetKeyword.find(0)) && mQueryKeyword.find(0)) {
+                            System.out.println("Timestamp query");
                             String query = mQueryKeyword.group(1);
                             String decodedStmt = java.net.URLDecoder.decode(query, StandardCharsets.UTF_8.name());
                             try {
@@ -73,7 +60,7 @@ public class RequestHandler {
                                 sb.append("\r\nHost: ").append(tripleStoreServer.getInetAddress().getHostName())
                                         .append(":").append(proxyPort);
                                 sb.append("\r\nConnection: ").append("Keep-Alive");
-                                sb.append("\r\nUser-Agent: ").append("Java Socket (Proxy Server)");
+                                sb.append("\r\nUser-Agent: ").append("java.net.socket application (Proxy Server)");
                                 sb.append("\r\nAccept-Encoding: ").append("gzip,deflate");
                                 sb.append("\r\n\r\n");
 
@@ -85,41 +72,31 @@ public class RequestHandler {
                                 streamToServer.write(request, 0, size);
                             }
                         }
-                        else if(mPostKeyword.find() && mUpdateKeyword.find())
+                        else if(mPostKeyword.find(0) && mUpdateKeyword.find(0) && mContentLength.find(0))
                         {
-                            System.out.println("Modify update");
-                            baseContentLength = ("update=" + mUpdateKeyword.group(2)).length();
-                            String update = mUpdateKeyword.group(1);
-                            String decodedStmt = java.net.URLDecoder.decode(update, StandardCharsets.UTF_8.name());
+                            System.out.println("Timestamp update");
+                            baseContentLength = ("update=").length();
+                            String updateUrlPropertyValue = mUpdateKeyword.group(1).substring(0, Integer.parseInt(mContentLength.group(1)) - baseContentLength);
+                            System.out.println(updateUrlPropertyValue);
+                            String decodedStmt = java.net.URLDecoder.decode(updateUrlPropertyValue, StandardCharsets.UTF_8.name());
                             String timestampedUpdate = "";
                             try {
-                                System.out.println(decodedStmt);
                                 timestampedUpdate = QueryHandler.timestampUpdate(decodedStmt);
-                                System.out.println(timestampedUpdate);
                                 String encodedInsert = java.net.URLEncoder.encode(timestampedUpdate, StandardCharsets.UTF_8.name());
-                                String newRequest = mUpdateKeyword.replaceFirst(encodedInsert + "$2");
-                                Pattern p2 = Pattern.compile("\\b(?<=Content-Length: ).*\\b");
-                                Matcher m2 = p2.matcher(newRequest);
-                                String newRequest2 = m2.replaceFirst(String.valueOf(baseContentLength + encodedInsert.length()));
-                                byte[] newRequestBytes = Utils.rtrim(newRequest2.getBytes(StandardCharsets.UTF_8));
-                                System.out.println(new String(newRequestBytes));
 
                                 //Create connection
                                 StringBuilder sb = new StringBuilder();
                                 sb.append("POST").append(" ").append("/repositories/testTimestamping/statements")
                                         .append(" ").append("HTTP/1.1");
-                                sb.append("Content-Type: ").append("application/x-www-form-urlencoded; charset=utf-8");
-                                sb.append("Content-Length: ").append(baseContentLength + encodedInsert.length());
+                                sb.append("\r\nContent-Type: ").append("application/x-www-form-urlencoded; charset=utf-8");
+                                sb.append("\r\nContent-Length: ").append(baseContentLength + encodedInsert.length());
                                 sb.append("\r\nHost: ").append(tripleStoreServer.getInetAddress().getHostName())
                                         .append(":").append(proxyPort);
                                 sb.append("\r\nConnection: ").append("Keep-Alive");
-                                sb.append("\r\nUser-Agent: ").append("Apache-HttpClient/4.5.13 (Java/11.0.13)");
+                                sb.append("\r\nUser-Agent: ").append("java.net.socket application (Proxy Server)\"");
                                 sb.append("\r\nAccept-Encoding: ").append("gzip,deflate");
-                                sb.append("\r\n");
-                                sb.append("update=").append(encodedInsert);
                                 sb.append("\r\n\r\n");
-
-                                System.out.println(sb);
+                                sb.append("update=").append(encodedInsert);
 
                                 // read from byte array and write to server
                                 streamToServer.write(sb.toString().getBytes(StandardCharsets.UTF_8));

@@ -169,7 +169,6 @@ public class StarVersProxyTest {
         sparqlProxyConnection.commit();
 
         //Wait for plugin to insert triples. This is managed by the server.
-        Thread.sleep(5000);
 
         TupleQuery query = sparqlRepoConnection.prepareTupleQuery(String.format("select * { <<<<%s>> ?x ?y>> ?a ?b }",triple));
         try (TupleQueryResult result = query.evaluate()) {
@@ -189,7 +188,6 @@ public class StarVersProxyTest {
         sparqlProxyConnection.commit();
 
         //Wait for plugin to insert triples. This is managed by the server.
-        Thread.sleep(5000);
 
         TupleQuery query = sparqlRepoConnection.prepareTupleQuery(
                 String.format("select * { {<<<<%s>> ?x ?y>> ?a ?b} union {<<<<%s>> ?x ?y>> ?a ?b} }", triple1, triple2));
@@ -209,8 +207,6 @@ public class StarVersProxyTest {
         sparqlProxyConnection.begin();
         sparqlProxyConnection.prepareUpdate(updateString).execute();
         sparqlProxyConnection.commit();
-
-        Thread.sleep(1000);
 
         TupleQuery query = sparqlRepoConnection.prepareTupleQuery(String.format("select * { <<<<%s>> ?x ?y>> ?a ?b }", triple));
 
@@ -243,8 +239,6 @@ public class StarVersProxyTest {
         sparqlProxyConnection.begin();
         sparqlProxyConnection.prepareUpdate(updateString).execute();
         sparqlProxyConnection.commit();
-
-        Thread.sleep(5000);
 
         TupleQuery query = sparqlRepoConnection.prepareTupleQuery(
                 String.format("select * { {<<<<%s>> ?x ?y>> ?a ?b} union {<<<<%s>> ?x ?y>> ?a ?b} }", triple1, triple2));
@@ -286,7 +280,6 @@ public class StarVersProxyTest {
         sparqlProxyConnection.begin();
         sparqlProxyConnection.prepareUpdate(updateString).execute();
         sparqlProxyConnection.commit();
-        Thread.sleep(500);
 
         updateString = String.format("delete data {%s .}", triple);
         sparqlProxyConnection.begin();
@@ -297,14 +290,11 @@ public class StarVersProxyTest {
         sparqlProxyConnection.begin();
         sparqlProxyConnection.prepareUpdate(updateString).execute();
         sparqlProxyConnection.commit();
-        Thread.sleep(500);
 
         updateString = String.format("delete data {%s .}", triple);
         sparqlProxyConnection.begin();
         sparqlProxyConnection.prepareUpdate(updateString).execute();
         sparqlProxyConnection.commit();
-        //Wait for plugin to insert triples. This is managed by the server.*/
-        Thread.sleep(2000);
 
         TupleQuery query = sparqlRepoConnection.prepareTupleQuery(String.format("select * { <<<<%s>> ?x ?y>> ?a ?b }",triple));
         try (TupleQueryResult result = query.evaluate()) {

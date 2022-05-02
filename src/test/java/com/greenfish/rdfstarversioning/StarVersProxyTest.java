@@ -40,7 +40,7 @@ public class StarVersProxyTest {
     public static void init() {
         repoId = "testTimestamping";
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        logFilePath = String.format("target/graphdb-data/logs/main-%s.log", dtf.format(LocalDateTime.now()));
+        logFilePath = String.format(FileUtils.getUserDirectoryPath() + "/graphdb-test/logs/main-%s.log", dtf.format(LocalDateTime.now()));
         lastLineNumber = getLastLineNumber(logFilePath);
 
         String queryEndpoint = String.format("http://localhost:7400/repositories/%s", repoId);

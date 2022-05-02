@@ -62,7 +62,7 @@ services:
       - "7400:7400"
     volumes:
       - ${GRAPHDB_HOME}:/opt/graphdb/home
-      - .src/test/resources/graphdb-docker-master/free-edition/LICENSE.txt:/opt/graphdb/dist/LICENSE.txt
+      - ./src/test/resources/graphdb-docker-master/free-edition/LICENSE.txt:/opt/graphdb/dist/LICENSE.txt
   proxy:
     container_name: graphdbproxy
     build:

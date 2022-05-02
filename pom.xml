@@ -93,9 +93,6 @@
                             <includes>
                                 <include>**</include>
                             </includes>
-                            <excludes>
-                                <exclude>graphdb-data/**<!-- folder you want to exclude --></exclude>
-                            </excludes>
                         </fileset>
                     </filesets>
                 </configuration>

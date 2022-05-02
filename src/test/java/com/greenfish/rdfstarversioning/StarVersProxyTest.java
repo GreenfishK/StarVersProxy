@@ -357,7 +357,7 @@ public class StarVersProxyTest {
 
         printWriter.println("docker-compose up -d preload");
         printWriter.println("docker-compose up -d database");
-        printWriter.println("docker-compose up -d proxy");
+        printWriter.println("docker-compose up -d --build proxy");
 
 
         printWriter.close();

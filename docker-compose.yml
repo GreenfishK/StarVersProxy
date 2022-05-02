@@ -7,7 +7,7 @@ services:
     container_name: graphdb-preload
     # image: ontotext/graphdb:${GRAPHDB_VERSION}-ee
     build:
-      context: ./free-edition
+      context: src/test/resources/graphdb-docker-master/free-edition
       dockerfile: Dockerfile
       args:
         version: ${GRAPHDB_VERSION}
@@ -39,7 +39,7 @@ services:
     container_name: graphdb
     # image: ontotext/graphdb:9.3.0-ee
     build:
-      context: ./free-edition
+      context: src/test/resources/graphdb-docker-master/free-edition
       dockerfile: Dockerfile
       args:
         version: 9.10.3
@@ -62,19 +62,20 @@ services:
       - "7400:7400"
     volumes:
       - ${GRAPHDB_HOME}:/opt/graphdb/home
-      - ./free-edition/LICENSE.txt:/opt/graphdb/dist/LICENSE.txt
+      - .src/test/resources/graphdb-docker-master/free-edition/LICENSE.txt:/opt/graphdb/dist/LICENSE.txt
   proxy:
     container_name: graphdbproxy
     # image:
     build:
       context: ./
       dockerfile: Dockerfile
+    image: starversproxy:latest
     network_mode: host
     restart: unless-stopped
     ports:
       - "7480:7480"
     volumes:
-      - ../../../../target/StarVersProxy-1.0-SNAPSHOT-jar-with-dependencies.jar:/opt/proxy/StarVersProxy-1.0-SNAPSHOT-jar-with-dependencies.jar
+      - ./target/StarVersProxy-1.0-SNAPSHOT-jar-with-dependencies.jar:/opt/proxy/StarVersProxy-1.0-SNAPSHOT-jar-with-dependencies.jar
     entrypoint: ['java', '-jar', '/opt/proxy/StarVersProxy-1.0-SNAPSHOT-jar-with-dependencies.jar']
 
 

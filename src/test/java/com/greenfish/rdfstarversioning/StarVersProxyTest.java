@@ -355,7 +355,6 @@ public class StarVersProxyTest {
                 tempScript));
         PrintWriter printWriter = new PrintWriter(streamWriter);
 
-        printWriter.println("cd src/test/resources/graphdb-docker-master");
         printWriter.println("docker-compose up -d preload");
         printWriter.println("docker-compose up -d database");
         printWriter.println("docker-compose up -d proxy");
@@ -401,7 +400,6 @@ public class StarVersProxyTest {
                 tempScript));
         PrintWriter printWriter = new PrintWriter(streamWriter);
 
-        printWriter.println("cd src/test/resources/graphdb-docker-master");
         printWriter.println("docker-compose stop proxy");
         printWriter.println("docker-compose stop database");
 

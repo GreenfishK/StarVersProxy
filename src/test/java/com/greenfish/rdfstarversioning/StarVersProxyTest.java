@@ -317,6 +317,18 @@ public class StarVersProxyTest {
     public static void shutdown() {
         //Close connection, shutdown repository and delete repository directory
         try {
+            //clear repo
+            // Test update statements against SPARQL endpoint
+            try (RepositoryConnection connection = sparqlRepoConnection) {
+                connection.begin();
+                String updateString = "clear default";
+                connection.prepareUpdate(updateString).execute();
+                connection.commit();
+            } catch (UpdateExecutionException e) {
+                System.err.println(e.getClass() + ":" + e.getMessage());
+                throw new RepositoryException(e.getMessage());
+            }
+
             repo.shutDown();
             sparqlRepoConnection.close();
             runDocker(shutdownContainer());

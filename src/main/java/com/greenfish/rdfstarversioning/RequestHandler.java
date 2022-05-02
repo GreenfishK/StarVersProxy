@@ -80,7 +80,7 @@ public class RequestHandler {
                         }
                         else if(mPostKeyword.find(0) && mUpdateKeyword.find(0) && mContentLength.find(0))
                         {
-                            System.out.println("Timestamp update");
+                            System.out.println("Timestamp update!");
                             baseContentLength = ("update=").length();
                             String updateUrlPropertyValue = mUpdateKeyword.group(1).substring(0, Integer.parseInt(mContentLength.group(1)) - baseContentLength);
                             String[] queryAndParams = updateUrlPropertyValue.split("&");
@@ -89,8 +89,6 @@ public class RequestHandler {
                                 params.append("&").append(queryAndParams[i]);
                             }
                             baseContentLength += params.length();
-                            System.out.println(baseContentLength);
-                            System.out.println(params);
                             String decodedStmt = java.net.URLDecoder.decode(queryAndParams[0], StandardCharsets.UTF_8.name());
                             String timestampedUpdate = "";
                             try {

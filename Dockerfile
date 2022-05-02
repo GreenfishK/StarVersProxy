@@ -1,6 +1,6 @@
 FROM maven:3.8.4-amazoncorretto-11 AS build
 
-ADD pom.xml pom.xml
-ADD src src
+ADD pom.xml /opt/proxy/pom.xml
+ADD src /opt/proxy/src
 
-RUN mvn clean compile assembly:single
+RUN mvn -f /opt/proxy/pom.xml clean compile assembly:single

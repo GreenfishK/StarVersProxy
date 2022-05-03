@@ -321,7 +321,7 @@ public class StarVersProxyTest {
             // Test update statements against SPARQL endpoint
             try (RepositoryConnection connection = sparqlRepoConnection) {
                 connection.begin();
-                String updateString = "clear default";
+                String updateString = "delete where {?s ?p ?o.}";
                 connection.prepareUpdate(updateString).execute();
                 connection.commit();
             } catch (UpdateExecutionException e) {

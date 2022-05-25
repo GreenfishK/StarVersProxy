@@ -1,20 +1,10 @@
 package com.greenfish.rdfstarversioning;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.eclipse.rdf4j.http.client.SPARQLProtocolSession;
-import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
-
 import java.io.*;
 import java.net.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class Proxy {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         try {
             String host = "localhost";
             int serverport = 7400;
@@ -25,7 +15,8 @@ public class Proxy {
             runServer(host, serverport, proxyport); // never returns
         }
         catch (Exception e) {
-            System.err.println(e); //Prints the standard errors
+            System.err.println(e.getMessage()); //Prints the standard errors
+            e.printStackTrace();
         }
     }
 

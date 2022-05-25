@@ -505,6 +505,7 @@ public class QueryHandler {
         StringBuilder insertBlock = new StringBuilder();
         while (scanner.hasNext())
             insertBlock.append(scanner.nextLine());
+        scanner.close();
         TurtleParser triplesParser = new TurtleParser();
         Model model = new LinkedHashModel();
         triplesParser.setRDFHandler(new StatementCollector(model));

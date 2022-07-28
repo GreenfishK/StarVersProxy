@@ -5,6 +5,7 @@
 3. Put the acquired license into the directory src/test/resources/graphdb-docker-master/free-edition (TODO: document how to acquire the license)
 
 ## Start the GraphDB database with docker-compose
+This is for testing purpose only. Your actual GraphDB databse or other triple store might run somewhere completely else.
 Run `docker-compose up database`
 
 ## Start the Proxy server with docker-compose

@@ -10,5 +10,8 @@ Run `docker-compose up database`
 ## Start the Proxy server with docker-compose
 Run `docker-compose up proxy`
 
+## Execute SPARQL queries
+TODO: Describe the possible ways how SPARQL queries can be sent to the proxy
+
 ## Build?
 `mvn clean compile assembly:single` ?

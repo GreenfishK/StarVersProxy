@@ -5,6 +5,7 @@
 3. Put the acquired license into the directory src/test/resources/graphdb-docker-master/free-edition (TODO: document how to acquire the license)
 
 ## Configure server address
+By default, the proxy will run on on port 7480 and localhost. It will connect to localhost:7200, which is the default GraphDB server. This is currently hardcoded in the main method of the Proxy.java file.
 TODO: Add a configuration file for the database server address. Currently the host and port are hardcoded in Proxy.java.
 
 ## Start the Proxy server with docker-compose

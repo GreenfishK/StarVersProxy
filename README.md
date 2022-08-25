@@ -57,7 +57,7 @@ Build and run:
 
 ```bash
 docker-compose build
-docker-compose up -d
+docker-compose up -d preload
 ```
 
 > GraphDB data will go to `/data/graphdb`

@@ -49,7 +49,7 @@ Go back to the root of the git repository to start GraphDB:
 cd ..
 ```
 
-### Start GraphDB
+## Start GraphDB
 
 To start GraphDB run the following **from the root of the git repository**:
 

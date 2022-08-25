@@ -7,8 +7,10 @@ import java.util.Properties;
 public class Proxy {
     public static void main(String[] args) {
         try {
-            String configFilePath = "src/config/proxy.properties";
-            FileInputStream propsInput = new FileInputStream(configFilePath);
+            //Path resourceDirectory = Paths.get("src","main","config");
+            URL properties = Proxy.class.getClassLoader().getResource("proxy.properties");
+            System.out.println(properties);
+            FileInputStream propsInput = new FileInputStream(properties.toString());
             Properties prop = new Properties();
             prop.load(propsInput);
 

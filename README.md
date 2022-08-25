@@ -1,5 +1,5 @@
-# How to use the proxy
-Follow these steps to use the proxy with its default configurations. To see how it can be reconfigured to target a specific server address, see [Configurations](#Configurations)
+# 1. How to use the proxy
+Follow these steps to use the proxy with its default configurations. To see how it can be reconfigured to target a specific server address, see [Configurations](#Configurations).
 
 ## Download the standalone version and license
 1. Go to the GraphDB [website](https://graphdb.ontotext.com/) and download GraphDB free. You need to register first and then you will get a mail from Ontotext with the download options. 
@@ -16,12 +16,12 @@ TODO: Describe the possible ways how SPARQL queries can be sent to the proxy
 
 ### Using an API
 
-# Configurations
+# 2. Configurations
 ## Configure server address
 TODO: Add a configuration file for the database server address. Currently the host and port are hardcoded in Proxy.java.
 
 
-# For testing and experimenting
+# 3. For testing and experimenting
 ## Start the GraphDB database with docker-compose
 Use following command to run your GraphDB inside a container. This eases manual experimenting and testing as you do not need to manually start a GraphDB instance first.
 Run `docker-compose up database`

@@ -2,13 +2,20 @@ package com.greenfish.rdfstarversioning;
 
 import java.io.*;
 import java.net.*;
+import java.util.Properties;
 
 public class Proxy {
     public static void main(String[] args) {
         try {
-            String host = "localhost";
-            int serverport = 7400;
-            int proxyport = 7480;
+            String configFilePath = "src/config/proxy.properties";
+            FileInputStream propsInput = new FileInputStream(configFilePath);
+            Properties prop = new Properties();
+            prop.load(propsInput);
+
+            String host = prop.getProperty("host");
+            int serverport = Integer.getInteger(prop.getProperty("serverport"));
+            int proxyport = Integer.getInteger(prop.getProperty("proxyport"));
+            
             // Printing a start-up message
             System.out.println("Starting proxy for " + host + ":" + serverport + " on port " + proxyport);
             // And start running the server

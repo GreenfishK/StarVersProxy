@@ -50,7 +50,7 @@ services:
         -Dgraphdb.home=/opt/graphdb/home
         -Dgraphdb.workbench.importDirectory=/opt/graphdb/home/graphdb-import
         -Dgraphdb.workbench.cors.enable=true
-        -Dgraphdb.connector.port=7400
+        -Dgraphdb.connector.port=7200
         -Dhttp.proxyHost=localhost|127.*|[::1]
         -Dhttp.proxyPort=7480
         -Denable-context-index=true
@@ -59,7 +59,7 @@ services:
         -Dgraphdb.append.request.id.headers=true
         -Dreuse.vars.in.subselects=true
     ports:
-      - "7400:7400"
+      - "7200:7200"
     volumes:
       - ${GRAPHDB_HOME}:/opt/graphdb/home
       - ./src/test/resources/graphdb-docker-master/free-edition/LICENSE.txt:/opt/graphdb/dist/LICENSE.txt

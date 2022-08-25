@@ -6,20 +6,34 @@ import java.util.Properties;
 
 public class Proxy {
     public static void main(String[] args) {
-        try {
-            //Path resourceDirectory = Paths.get("src","main","config");
-            URL properties = Proxy.class.getClassLoader().getResource("proxy.properties");
-            System.out.println(properties);
-            FileInputStream propsInput = new FileInputStream(properties.toString());
-            Properties prop = new Properties();
-            prop.load(propsInput);
+        String host = null;
+        int serverport = -1;
+        int proxyport = -1;
 
-            String host = prop.getProperty("host");
-            int serverport = Integer.getInteger(prop.getProperty("serverport"));
-            int proxyport = Integer.getInteger(prop.getProperty("proxyport"));
+        try {
+            try (InputStream input = Proxy.class.getClassLoader().getResourceAsStream("config.properties")) {
+
+                Properties prop = new Properties();
+    
+                if (input == null) {
+                    System.out.println("Sorry, unable to find config.properties");
+                    return;
+                }
+    
+                //load a properties file from class path, inside static method
+                prop.load(input);
+
+                host = prop.getProperty("host");
+                serverport = Integer.parseInt(prop.getProperty("serverport"));
+                proxyport = Integer.parseInt(prop.getProperty("proxyport"));
+    
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
             
             // Printing a start-up message
             System.out.println("Starting proxy for " + host + ":" + serverport + " on port " + proxyport);
+            
             // And start running the server
             runServer(host, serverport, proxyport); // never returns
         }

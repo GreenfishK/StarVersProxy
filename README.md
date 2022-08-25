@@ -12,6 +12,9 @@ Run `docker-compose up proxy`
 
 ## Execute SPARQL queries
 TODO: Describe the possible ways how SPARQL queries can be sent to the proxy
+### Using a graphical query interface
+
+### Using an API
 
 # For testing and experimenting
 ## Start the GraphDB database with docker-compose

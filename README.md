@@ -18,7 +18,7 @@ TODO: Describe the possible ways how SPARQL queries can be sent to the proxy
 
 # 2. Configurations
 ## Configure server address
-TODO: Add a configuration file for the database server address. Currently the host and port are hardcoded in Proxy.java.
+The server address and port can be configered in the src/main/resources/config.properties file. 
 
 
 # 3. For testing and experimenting
@@ -57,7 +57,7 @@ Build and run:
 
 ```bash
 docker-compose build
-docker-compose up -d
+docker-compose up -d preload
 ```
 
 > GraphDB data will go to `/data/graphdb`

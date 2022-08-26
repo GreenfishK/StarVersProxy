@@ -69,7 +69,7 @@ services:
       context: ./
       dockerfile: Dockerfile
     image: starversproxy:latest
-    network_mode: host
+    network_mode: host # Funktioniert ab docker-compose 1.25 nicht mehr
     restart: unless-stopped
     ports:
       - "7480:7480"
